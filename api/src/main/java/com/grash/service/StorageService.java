@@ -40,6 +40,14 @@ public interface StorageService {
     String upload(byte[] data, String fileName, String folder);
 
     /**
+     * Deletes the stored object identified by its object key/path. Implementations must treat an
+     * already-absent object as a successful no-op (idempotent).
+     *
+     * @param filePath The object key/path to delete (as stored in {@code File.path}).
+     */
+    void delete(String filePath);
+
+    /**
      * Uploads a file to a specific, caller-controlled path (no key generation).
      * Overwrites any existing object at that path.
      *

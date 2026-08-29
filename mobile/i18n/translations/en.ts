@@ -1395,6 +1395,13 @@ const locale = {
   not_enough_part: 'There is not enough of this part',
   update_profile: 'Update profile',
   confirm_logout: 'Are you sure you want to logout ?',
+  'Sign out': 'Sign out',
+  Version: 'Version',
+  'Dev Info': 'Dev Info',
+  'Build ID': 'Build ID',
+  informations: 'Information',
+  hour: 'Hour',
+  notifications: 'Notifications',
   report: 'Report',
   end_cannot_be_ulterior_to_start: 'End date cannot be ulterior to start date',
   storage_permission_needed_description:

@@ -17,10 +17,16 @@ export const getApiUrl = async (): Promise<string> => {
 
     // Use custom URL if available, otherwise use default
     const rawApiUrl = customUrl || defaultApiUrl;
+    // MOD-015 (M-BUG-1): guard against an unset URL — in a dev build the baked
+    // API_URL is undefined and, before a custom server is configured, customUrl
+    // is also null, so `rawApiUrl` would be undefined. Return '' instead of
+    // calling .endsWith() on undefined (which threw a TypeError at startup).
+    if (!rawApiUrl) return '';
     return rawApiUrl.endsWith('/') ? rawApiUrl : rawApiUrl + '/';
   } catch (error) {
     // Fallback to default URL if there's an error
     const rawApiUrl = defaultApiUrl;
+    if (!rawApiUrl) return '';
     return rawApiUrl.endsWith('/') ? rawApiUrl : rawApiUrl + '/';
   }
 };

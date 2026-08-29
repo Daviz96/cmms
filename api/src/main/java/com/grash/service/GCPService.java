@@ -181,6 +181,13 @@ public class GCPService implements StorageService {
         }
     }
 
+    @Override
+    public void delete(String filePath) {
+        checkIfConfigured();
+        // storage.delete returns false when the object is absent (idempotent no-op).
+        storage.delete(BlobId.of(gcpBucketName, filePath));
+    }
+
     private void checkIfConfigured() {
         if (!configured)
             throw new CustomException("Google Cloud Storage is not configured. Please define the GCP credentials in " +

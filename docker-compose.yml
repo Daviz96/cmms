@@ -13,7 +13,14 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   api:
-    image: intelloop/atlas-cmms-backend
+    # MOD-006: build the backend from the repository sources so a self-hosted deploy
+    # runs the modified code (MOD-001 self-hosted licensing, MOD-004B attachment
+    # security), not the upstream prebuilt image. `docker compose build` (or `up` on a
+    # fresh checkout) produces this image from ./api; the explicit local tag makes the
+    # running image's provenance obvious and avoids accidentally pulling upstream.
+    build:
+      context: ./api
+    image: atlas-cmms-backend:local
     container_name: atlas-cmms-backend
     depends_on:
       - postgres
@@ -53,6 +60,7 @@ services:
       LICENSE_KEY: ${LICENSE_KEY:-}
       LICENSE_FINGERPRINT_REQUIRED: ${LICENSE_FINGERPRINT_REQUIRED:-false}
       LICENSE_FILE_PATH: ${LICENSE_FILE_PATH:-}
+      LICENSING_SELF_HOSTED_MODE: ${LICENSING_SELF_HOSTED_MODE:-false}
       ALLOWED_ORGANIZATION_ADMINS: ${ALLOWED_ORGANIZATION_ADMINS:-}
       LOGO_PATHS: ${LOGO_PATHS}
       CUSTOM_COLORS: ${CUSTOM_COLORS}

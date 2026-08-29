@@ -2,6 +2,7 @@ package com.grash.service;
 
 import com.grash.exception.CustomException;
 import com.grash.model.File;
+import com.grash.model.enums.FileType;
 import com.grash.utils.Helper;
 import io.minio.*;
 import io.minio.errors.*;
@@ -24,6 +25,9 @@ import java.io.InputStream;
 import java.net.*;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -163,25 +167,61 @@ public class MinioService implements StorageService {
 
     @Cacheable(cacheNames = "signedUrls", key = "#file.path + ':' + #expirationMinutes")
     public String generateSignedUrl(File file, long expirationMinutes) {
-        return generateSignedUrl(file.getPath(), expirationMinutes);
+        return generateSignedUrl(file.getPath(), expirationMinutes, responseHeaderOverrides(file));
     }
 
     public String generateSignedUrl(String filePath, long expirationMinutes) {
+        return generateSignedUrl(filePath, expirationMinutes, Collections.emptyMap());
+    }
+
+    private String generateSignedUrl(String filePath, long expirationMinutes, Map<String, String> extraQueryParams) {
         try {
-            String internalUrl = minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.GET)
-                            .bucket(minioBucket)
-                            .object(filePath)
-                            .expiry(Math.toIntExact(expirationMinutes), TimeUnit.MINUTES)
-                            .build()
-            );
+            GetPresignedObjectUrlArgs.Builder builder = GetPresignedObjectUrlArgs.builder()
+                    .method(Method.GET)
+                    .bucket(minioBucket)
+                    .object(filePath)
+                    .expiry(Math.toIntExact(expirationMinutes), TimeUnit.MINUTES);
+            if (extraQueryParams != null && !extraQueryParams.isEmpty()) {
+                builder.extraQueryParams(extraQueryParams);
+            }
+            String internalUrl = minioClient.getPresignedObjectUrl(builder.build());
             if (!minioPublicEndpoint.isEmpty()) {
                 return internalUrl.replace(minioEndpoint, minioPublicEndpoint);
             }
             return internalUrl;
         } catch (Exception exception) {
             throw new RuntimeException(exception);
+        }
+    }
+
+    /**
+     * MOD-004B — response-header overrides applied to the presigned URL. Non-image attachments are
+     * served with {@code Content-Disposition: attachment} so active content (HTML/SVG) is downloaded
+     * instead of being rendered inline from the same origin (stored-XSS mitigation). Images stay
+     * inline so previews keep working.
+     */
+    static Map<String, String> responseHeaderOverrides(File file) {
+        Map<String, String> params = new HashMap<>();
+        if (file != null && file.getType() != FileType.IMAGE) {
+            params.put("response-content-disposition", "attachment");
+        }
+        return params;
+    }
+
+    @Override
+    public void delete(String filePath) {
+        checkIfConfigured();
+        try {
+            // MinIO/S3 removeObject is idempotent: deleting an absent key succeeds.
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(minioBucket)
+                            .object(filePath)
+                            .build()
+            );
+        } catch (MinioException | IOException | InvalidKeyException | NoSuchAlgorithmException e) {
+            log.warn("MinIO error deleting object {}", filePath, e);
+            throw new CustomException("Failed to delete the file from storage.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

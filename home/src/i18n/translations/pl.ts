@@ -792,7 +792,7 @@ const plJSON = {
   category_edit_failure: "Nie udało się edytować kategorii",
   category_delete_success: "Kategoria została pomyślnie usunięta",
   category_delete_failure: "Nie udało się usunąć kategorii",
-  timers: "Liczniki",
+  timers: "Timery",
   costs: "Koszty",
   add_category: "Dodaj nową kategorię",
   add_category_description: "Wprowadź nazwę, aby utworzyć i dodać nową kategorię",
@@ -818,7 +818,7 @@ const plJSON = {
   external_id: "ID zewnętrzne",
   permissions: "Uprawnienia",
   create_role_description:
-    "Ta rola ma takie same uprawnienia jak administrator w {shortBrandName}, ale możesz dostosować niektóre istotne uprawnienia poniżej.",
+    "Ta rola ma takie same uprawnienia jak administrator w {brandName}, ale możesz dostosować niektóre istotne uprawnienia poniżej.",
   create_and_edit: "Tworzenie/Edytowanie",
   to_access: "Dostęp",
   role_delete_success: "Rola została pomyślnie usunięta",
@@ -1429,7 +1429,7 @@ const plJSON = {
     feature_unlimited_work_orders: "Nieograniczona liczba zleceń",
     feature_custom_tasks: "Zadania niestandardowe",
     feature_unlimited_request_user_licenses: "Nieograniczona liczba licencji użytkownika na żądanie",
-    plan_starter_name: "Rozrusznik",
+    plan_starter_name: "Startowy",
     plan_starter_description:
       "Zespoły chcące wdrożyć skuteczną i skuteczną konserwację zapobiegawczą dzięki wglądowi w stan maszyn i zasoby ludzkie.",
     feature_everything_in_basic_plus: "Wszystko w pakiecie Basic plus:",
@@ -1514,7 +1514,7 @@ const plJSON = {
     sh_feature_local_data_storage: "Lokalne przechowywanie danych",
     sh_plan_professional_name: "Profesjonalny",
     sh_plan_professional_description:
-      "Idealne do uprawy roślin wymagających zaawansowanych list kontrolnych, przepływów pracy i głębszej integracji systemów.",
+      "Idealne dla rozwijających się zakładów wymagających zaawansowanych list kontrolnych, przepływów pracy i głębszej integracji systemów.",
     sh_feature_everything_in_basic_plus: "Wszystko w pakiecie Basic plus:",
     sh_feature_unlimited_assets_checklists: "Nieograniczone zasoby/listy kontrolne",
     sh_feature_nfc_barcode_scanning: "NFC i skanowanie kodów kreskowych",
@@ -1596,6 +1596,7 @@ const plJSON = {
   trusted_by_maintenance_teams: "Zaufany przez zespoły ds. utrzymania ruchu w różnych branżach",
   cut_costs_performance: "Zredukuj koszty bez utraty wydajności",
   free_cmms: {
+    short: "Darmowy CMMS",
     title: "Darmowe Oprogramowanie CMMS | Karta kredytowa nie jest wymagana",
     description:
       "Darmowe oprogramowanie CMMS — to nie jest wersja próbna. Zarządzaj konserwacją, zasobami i zleceniami pracy błyskawicznie. Nie wymagamy karty kredytowej.",
@@ -1653,6 +1654,24 @@ const plJSON = {
       "CMMS, komputerowy system zarządzania konserwacją, EAM, zarządzanie majątkiem przedsiębiorstwa, cmms open source, darmowe oprogramowanie do konserwacji, zarządzanie zleceniami pracy, konserwacja zapobiegawcza, śledzenie zasobów, zarządzanie obiektami, oprogramowanie do śledzenia konserwacji, konserwacja sprzętu, Atlas CMMS",
   },
   prefer_one_time_purchase: "Wolisz jednorazowy zakup? Licencje wieczyste są dostępne za 36× stawki miesięcznej.",
+  payment_success_title: "Płatność zakończona sukcesem!",
+  payment_success_description:
+    "Twoja płatność została przetworzona pomyślnie. Sprawdź swój e-mail, aby uzyskać szczegóły licencji.",
+  demo_warning:
+    "Ta instancja działa w trybie demonstracyjnym. Nie używaj jej do prawdziwych danych! Wszystko będzie regularnie usuwane!",
+  delete_demo_data: "Usuń dane demonstracyjne",
+  import_pm_success: "Utworzono {created} harmonogramów zleceń pracy, a {updated} zaktualizowano",
+  recurrence_type: "Typ cykliczności",
+  recurrence_based_on: "Cykliczność na podstawie",
+  days_of_week: "Dni tygodnia",
+  no_recent_work_orders: "Brak ostatnich zleceń pracy",
+  recent_work_orders: "Ostatnie zlecenia pracy",
+  subscription_will_cancel_on: "Subskrypcja zostanie anulowana dnia {date}",
+  open_api_docs: "Otwórz dokumentację API",
+  delete_account: "Usuń konto",
+  Advantages: "Zalety",
+  installation_docs: "Dokumentacja instalacji",
+  SSO: "SSO",
 };
 
 export default plJSON;

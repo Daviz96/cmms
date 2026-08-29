@@ -57,7 +57,7 @@ export default function EditLocationScreen({
     navigation.goBack();
   };
   const onEditFailure = (err) =>
-    showSnackBar(t('location_update_failure'), 'error');
+    showSnackBar(t('location_edit_failure'), 'error');
 
   return (
     <View style={styles.container}>

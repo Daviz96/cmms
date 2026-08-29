@@ -556,6 +556,25 @@ class AssetServiceTest {
             verify(assetRepository).saveAndFlush(saved);
         }
 
+        // MOD-011 (F-01): a partial PATCH without status must not NPE and must leave status unchanged.
+        @Test
+        void patchWithoutStatus_doesNotFailAndKeepsStatus() {
+            Asset saved = buildAsset(1L); // status OPERATIONAL, createdBy == user.id → editable
+            AssetPatchDTO dto = new AssetPatchDTO(); // status intentionally left null
+            dto.setName("Renamed");
+            when(assetRepository.findById(1L)).thenReturn(Optional.of(saved));
+            stubUpdatePipeline();
+            when(assetMapper.updateAsset(any(Asset.class), any(AssetPatchDTO.class))).thenAnswer(inv -> inv.getArgument(0));
+            stubMessageKeys();
+
+            Asset result = assertDoesNotThrow(() -> assetService.patch(1L, dto, user));
+
+            assertEquals(AssetStatus.OPERATIONAL, result.getStatus()); // status unchanged
+            assertEquals(AssetStatus.OPERATIONAL, dto.getStatus());     // defaulted to existing → no transition
+            verify(assetDowntimeService, never()).create(any(AssetDowntime.class), anyBoolean());
+            verify(assetRepository).saveAndFlush(saved);
+        }
+
         @Test
         void assetNotFound_throwsNotFound() {
             when(assetRepository.findById(1L)).thenReturn(Optional.empty());

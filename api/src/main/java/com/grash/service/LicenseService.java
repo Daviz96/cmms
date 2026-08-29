@@ -6,6 +6,7 @@ import com.grash.model.KeygenRequestTracker;
 import com.grash.repository.KeygenRequestTrackerRepository;
 import com.grash.utils.FingerprintGenerator;
 import com.grash.utils.LicenseFileValidator;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +33,28 @@ public class LicenseService {
             "cf9ce7f95c29c0cb0666a61d89c931bd4170a5fbaa0a391ff6649c213f4d13fc";
     private static final int DAILY_REQUEST_LIMIT = 20;
 
+    /**
+     * Plan name reported by {@link #getLicensingState()} when self-hosted mode is active (MOD-001).
+     */
+    private static final String SELF_HOSTED_PLAN_NAME = "Self-Hosted";
+
+    /**
+     * Entitlements granted in self-hosted mode (MOD-001).
+     *
+     * <p>Policy (explicit): the full {@link LicenseEntitlement} enum. The self-hosted audit
+     * (see {@code docs/self-hosted-audit/}) verified that every entitlement gates a feature that
+     * is already fully implemented in this AGPLv3 codebase; none of them depends on unavailable
+     * commercial code. Features that additionally require external services (LDAP/AD server,
+     * object storage, SMTP) stay gated by their own configuration flags — enabling the
+     * entitlement here does not activate those services by itself.</p>
+     */
+    private static final Set<String> SELF_HOSTED_ENTITLEMENTS =
+            Arrays.stream(LicenseEntitlement.values())
+                    .map(Enum::name)
+                    .collect(Collectors.collectingAndThen(
+                            Collectors.toCollection(LinkedHashSet::new),
+                            Collections::unmodifiableSet));
+
     private final ObjectMapper objectMapper;
     private final KeygenRequestTrackerRepository keygenRequestTrackerRepository;
     private final RestTemplate restTemplate = new RestTemplate();
@@ -48,12 +71,30 @@ public class LicenseService {
     @Value("${license-file-path:#{null}}")
     private String licenseFilePath;
 
+    /**
+     * MOD-001 — when {@code true}, entitlements are resolved locally (self-hosted policy) and
+     * Keygen is never contacted. Default {@code false} keeps the commercial licensing behavior.
+     */
+    @Value("${licensing.self-hosted-mode:false}")
+    private boolean selfHostedMode;
+
     private volatile LicenseValidationResponse cachedLicenseResponse;
     private volatile DecryptedLicenseData cachedDecryptedLicenseData;
     private volatile Set<String> cachedEntitlements = new HashSet<>();
     private volatile long lastCheckedTime = 0;
 
+    @PostConstruct
+    void logLicensingMode() {
+        log.info("Atlas licensing mode: {}", selfHostedMode ? "SELF_HOSTED" : "COMMERCIAL");
+    }
+
     public synchronized LicensingState getLicensingState() {
+        // MOD-001: self-hosted mode resolves entitlements locally and never contacts Keygen.
+        // Evaluated before any cache/key/file check so no secondary path can reach Keygen first.
+        if (selfHostedMode) {
+            return buildSelfHostedLicensingState();
+        }
+
         if (isCacheValid()) {
             return buildLicensingStateFromCache();
         }
@@ -69,6 +110,24 @@ public class LicenseService {
 
         // Fall back to Keygen API validation
         return validateAndCacheLicenseKey();
+    }
+
+    /**
+     * Builds a deterministic {@link LicensingState} for self-hosted mode (MOD-001).
+     * Grants the self-hosted entitlement policy without reading or writing the Keygen cache and
+     * without any network call, so the result never depends on a previously cached Keygen response.
+     */
+    private LicensingState buildSelfHostedLicensingState() {
+        return LicensingState.builder()
+                .valid(true)
+                .hasLicense(true)
+                .planName(SELF_HOSTED_PLAN_NAME)
+                .entitlements(new HashSet<>(SELF_HOSTED_ENTITLEMENTS))
+                .expirationDate(null)
+                // Unlimited users; only read by UserService#checkUsageBasedLimit, which is already
+                // short-circuited by the UNLIMITED_USERS entitlement granted above.
+                .usersCount(Integer.MAX_VALUE)
+                .build();
     }
 
     public boolean isSSOEnabled() {

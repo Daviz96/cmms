@@ -120,7 +120,11 @@ frontend:
   url: ${PUBLIC_FRONT_URL}
   home-url: ${PUBLIC_HOME_URL:}
 mail:
-  recipients: ${MAIL_RECIPIENTS}
+  # MOD-006 (CFG-01): default to empty so a deployment without email notifications
+  # configured still boots. When set, notification behavior is unchanged. Empty string
+  # binds to an empty String[] (length 0), matching the null/empty checks in the
+  # consumers (UserService, WebhookController) and the disabled-notifications path.
+  recipients: ${MAIL_RECIPIENTS:}
   enable: ${ENABLE_EMAIL_NOTIFICATIONS:false}
   type: ${MAIL_TYPE:SMTP}
 management:
@@ -157,6 +161,9 @@ oauth2:
 license-key: ${LICENSE_KEY:}
 license-fingerprint-required: ${LICENSE_FINGERPRINT_REQUIRED:true}
 license-file-path: ${LICENSE_FILE_PATH:}
+licensing:
+  # MOD-001: when true, entitlements are resolved locally (self-hosted policy) and Keygen is not contacted.
+  self-hosted-mode: ${LICENSING_SELF_HOSTED_MODE:false}
 white-labeling:
   logo-paths: ${LOGO_PATHS:}
   custom-colors: ${CUSTOM_COLORS:}

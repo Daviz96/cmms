@@ -416,6 +416,12 @@ public class AssetService {
             Asset savedAsset = optionalAsset.get();
             em.detach(savedAsset);
             if (savedAsset.canBeEditedBy(user)) {
+                // MOD-011 (F-01): a partial PATCH may omit status; default it to the asset's
+                // current status so the downtime-transition check below does not NPE and the
+                // status is left unchanged when the caller did not send it.
+                if (asset.getStatus() == null) {
+                    asset.setStatus(savedAsset.getStatus());
+                }
                 if (!asset.getStatus().isReallyDown() && savedAsset.getStatus().isReallyDown()) {
                     stopDownTime(savedAsset.getId(), Helper.getLocale(user));
                 } else if (asset.getStatus().isReallyDown() && !savedAsset.getStatus().isReallyDown()) {
