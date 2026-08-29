@@ -1,20 +1,24 @@
 # MOD-020 — Release Commit, Tag & Push
 
-Preparazione della baseline versionata (commit/tag/push) della release self-hosted. Il MOD si è
-**fermato al gate obbligatorio dei test backend (§9)**: la suite reale, rieseguita con Docker/
-Testcontainers, **non è verde** (6 fallimenti). Per le regole del MOD (§9, §24, §25) **non è stato
-creato alcun commit, tag o push**. Nessuna modifica di codice.
+Preparazione della baseline versionata (commit/tag/push) della release self-hosted. Il gate
+obbligatorio dei test backend (§9) è risultato **non verde** (6 fallimenti in `PasswordValidatorTest`,
+feature "common passwords" **upstream**, fuori dal diff self-hosted). **Il responsabile ha scelto
+l'opzione B** — accettare esplicitamente questi 6 fallimenti come pre-esistenti/upstream (fix futuro
+se servirà) e autorizzare comunque il versionamento, dopo conferma che **non esistono altri
+fallimenti/errori** nella suite. Commit, tag annotato e push **eseguiti**. Nessuna modifica di codice.
 
 ```text
 Code changes in this MOD: NONE
-Commit / Tag / Push: NOT PERFORMED (blocked at backend test gate)
+Backend test gate: 1446 run / 6 failures (PasswordValidatorTest, upstream) / 0 errors — accepted (owner, option B)
+Commit / Tag / Push: DONE (branch self-hosted, commit a03c35db, tag self-hosted-v1.0.0, pushed to origin)
 ```
 
-> **Esito in una riga:** working tree e secret **OK**, ma il **gate test backend FALLISCE**:
-> `Tests run: 1446, Failures: 6, Errors: 0` — 6 fallimenti in **`PasswordValidatorTest`** (feature
-> "common passwords" **upstream**, committata a HEAD, **fuori dal diff self-hosted**). La baseline
-> documentata `1446/1446` (MOD-011) è **STALE**. Per §9/§25 → **DO NOT COMMIT / STOP**. Serve una
-> decisione del responsabile prima di poter versionare. → **RELEASE BLOCKED.**
+> **Esito in una riga:** working tree e secret **OK**; il **gate test backend** ha esattamente **6
+> fallimenti**, **tutti** in `PasswordValidatorTest` (common-passwords, **upstream**, fuori dal diff),
+> **0 errori** e nient'altro rosso. Su decisione esplicita del responsabile (opzione B, deroga
+> documentata a §9) la baseline è stata **committata, taggata e pushata**: ramo **`self-hosted`**,
+> commit **`a03c35db`** (97 file), tag **`self-hosted-v1.0.0`**, su `origin` (`Daviz96/cmms`); `main`
+> intatto (`e1d24406`). → **RELEASE VERSIONED (with accepted known findings).**
 
 ---
 
@@ -100,32 +104,66 @@ MOD-020 ha rilevato che l'attuale HEAD **non è verde**.
 - **Android release APK:** presente (`app-release.apk`, 95,5 MB) — non rigenerato in questo MOD (è
   compito di MOD-021, dal codice committato). Non pertinente al blocco.
 
+### 5b. Owner Decision (Option B)
+
+Dopo la diagnosi, il responsabile ha verificato che la suite ha **esattamente 6 fallimenti, tutti in
+`PasswordValidatorTest`, 0 errori** (nessun altro test rosso — auth, authz, tenant isolation,
+licensing, allegati, assets, work orders, integration test: tutti verdi) e ha deciso: **opzione B —
+accettare i 6 fallimenti upstream come non bloccanti** per l'obiettivo (fix in futuro se servirà) e
+**autorizzare commit/tag/push**. Deroga esplicita a §9, tracciata qui come rischio noto (F20-1).
+
+## 6b. Backend Test Gate — accepted breakdown
+
+```text
+Tests run: 1446   Failures: 6   Errors: 0   Skipped: 0
+Le 6 failures: PasswordValidatorTest (CommonPasswords ×5 + CommonPasswordsLoading ×1). Nient'altro rosso.
+```
+
 ## 7. Staged Files
 
-`NONE.` Nessuno staging eseguito — il gate §5 ha imposto STOP prima di `git add`.
+`97 file` (staging selettivo `git add -A` — gitignored esclusi; verificato: nessun `.env`/
+`google-services.json`/`*.key`/`target`/`build` in staged; `git diff --cached --check` = solo
+trailing-whitespace cosmetico in alcuni `.md` di prompt, non toccato per §4). Gruppi: `.env.example` 1,
+`api` 16 (11 mod + 5 test), `docker-compose.yml` 1, `docs` 71, `home` 1, `mobile` 7.
 
 ## 8. Commit
 
-`NOT CREATED.` (bloccato dal gate test)
+`CREATED.` `a03c35db` sul ramo **`self-hosted`** (creato dal HEAD `e1d24406`; `main` **intatto**).
+`97 files changed, 28903 insertions(+), 91 deletions(-)`. Messaggio: *"release: finalize self-hosted
+Atlas CMMS baseline (self-hosted-v1.0.0)"* (convenzione conventional-commit del repo; corpo che elenca
+MOD-001..020 e dichiara i 6 fail upstream accettati; trailer `Co-Authored-By`).
 
 ## 9. Release Tag
 
-`NOT CREATED.` Tag pianificato: `self-hosted-v1.0.0` (namespace distinto scelto dal responsabile;
-esistono tag upstream `v1.0.0…v1.8.0` da cui ci si separa). Non creato.
+`CREATED.` Tag **annotato** `self-hosted-v1.0.0` su `a03c35db` (namespace distinto scelto dal
+responsabile; esistono tag upstream `v1.0.0…v1.8.0` da cui ci si separa).
 
 ## 10. Push
 
-`NOT PERFORMED.` Remote previsto: `origin` = `git@github.com:Daviz96/cmms.git` (branch `self-hosted`
-+ tag). Non eseguito.
+`DONE.` `git push -u origin self-hosted` → `* [new branch] self-hosted -> self-hosted` (exit 0);
+`git push origin self-hosted-v1.0.0` → `* [new tag] self-hosted-v1.0.0 -> self-hosted-v1.0.0` (exit 0).
+Remote: `origin` = `git@github.com:Daviz96/cmms.git`. Nessun force push. (GitHub ha proposto il link
+di apertura PR per `self-hosted`.)
 
 ## 11. Remote Verification
 
-`N/A` (nessun push).
+`PASS.` `origin/self-hosted` = **`a03c35db`** (== HEAD locale; `git status -sb` in sync, 0 ahead/0
+behind); tag `self-hosted-v1.0.0` pushato (confermato dall'output del push). Branch tracking
+configurato (`origin`/`refs/heads/self-hosted`).
 
 ## 12. Release Baseline
 
-`NON PRODOTTA.` Il versionamento è bloccato finché la suite backend non è verde (o finché il
-responsabile non decide esplicitamente come trattare i 6 fallimenti upstream).
+```text
+Branch:        self-hosted   (main intatto @ e1d24406)
+Commit:        a03c35db      release: finalize self-hosted Atlas CMMS baseline (self-hosted-v1.0.0)
+Tag:           self-hosted-v1.0.0 (annotated)
+Remote:        origin  git@github.com:Daviz96/cmms.git
+Working tree:  clean
+Backend test:  1446 run / 6 fail (PasswordValidatorTest, upstream, accepted) / 0 errors
+Android build: app-release.apk presente (MOD-017); da rigenerare dal codice taggato in MOD-021
+```
+
+Questa è la baseline per **MOD-021 (Android Release APK)** e **MOD-022 (Server Deployment Preparation)**.
 
 ## 13. CLAUDE.md Update
 
@@ -143,42 +181,36 @@ push. Nessuna modifica di codice.
 ```text
 CLAUDE.md updated: YES
 
-Branch: main @ e1d24406 (nessun ramo self-hosted creato)
-Pre-commit working tree: 21 tracked modified + 5 test untracked + docs/ (70)
+Branch: self-hosted (creato da main @ e1d24406; main intatto)
+Pre-commit working tree: 21 tracked modified + 5 test untracked + docs/ (71)
 Secret audit: PASS
 .gitignore: PASS
-Backend test: FAIL (1446 run, 6 failures — PasswordValidatorTest, upstream, fuori dal diff MOD)
-Android build: NOT RUN (artefatto MOD-017 presente)
+Backend test: 1446 run / 6 failures / 0 errors — 6 in PasswordValidatorTest (upstream, fuori dal diff) — ACCEPTED (owner, option B)
+Android build: NOT RUN (artefatto MOD-017 presente; APK definitiva = MOD-021)
 Frontend: UNCHANGED
 Database: NO CHANGES
-Staged files: 0
-Commit: NONE
-Release tag: NONE (pianificato self-hosted-v1.0.0)
-Push branch: NOT PERFORMED
-Push tag: NOT PERFORMED
-Remote verification: N/A
-Post-release working tree: N/A (nessuna operazione git di scrittura)
-Release baseline: NONE
-Next step: USER DECISION — risolvere il gate test (F20-1) e poi ri-eseguire MOD-020
-Final verdict: RELEASE BLOCKED
+Staged files: 97
+Commit: a03c35db
+Commit message: release: finalize self-hosted Atlas CMMS baseline (self-hosted-v1.0.0)
+Release tag: self-hosted-v1.0.0 (annotated)
+Push branch: SUCCESS
+Push tag: SUCCESS
+Remote verification: PASS (origin/self-hosted = a03c35db, in sync)
+Post-release working tree: CLEAN (poi + follow-up doc commit che registra questo esito)
+Release baseline: a03c35db + self-hosted-v1.0.0 (origin/self-hosted)
+Next step: MOD-021 — Android Release APK
+Final verdict: RELEASE VERSIONED (with accepted known findings)
 ```
 
-**RELEASE BLOCKED.** Il working tree self-hosted è coerente, sicuro (secret) e attribuibile ai MOD, ma
-il **gate obbligatorio dei test backend non è verde**: 6 fallimenti in `PasswordValidatorTest`, una
-feature **upstream** (caricamento `common-passwords.txt`) **non introdotta né toccata dalle modifiche
-self-hosted**. Per le regole di MOD-020 (§9 DO NOT COMMIT, §24 no dichiarazioni false, §25 STOP) non è
-stato creato alcun commit/tag/push e non correggo il difetto upstream in autonomia (§4/§16).
+**RELEASE VERSIONED.** Il working tree self-hosted (coerente, sicuro sui secret, attribuibile ai MOD) è
+stato versionato: ramo **`self-hosted`**, commit **`a03c35db`** (97 file), tag annotato
+**`self-hosted-v1.0.0`**, pushati su `origin` (`Daviz96/cmms`); `main` intatto (`e1d24406`). Il gate dei
+test backend aveva **6 fallimenti**, **tutti** in `PasswordValidatorTest` (feature "common passwords"
+**upstream**, non introdotta né toccata dal lavoro self-hosted), **0 errori** e nient'altro rosso; su
+**decisione esplicita del responsabile (opzione B)** sono stati accettati come pre-esistenti/upstream e
+tracciati come **F20-1** (fix futuro se servirà, out-of-scope self-hosted). Non ho corretto il difetto
+upstream in autonomia (§4/§16).
 
-**Opzioni per il responsabile (decisione richiesta):**
-- **(A)** Correggere il difetto upstream `PasswordValidator.loadCommonPasswords()` (il set risulta vuoto
-  a runtime nonostante il file presente) come **task separato** → suite verde → **ri-eseguire MOD-020**.
-  È l'unico percorso che produce una baseline verde. *(Nota: sarebbe una modifica a codice **upstream**,
-  fuori dal perimetro self-hosted; va autorizzata esplicitamente.)*
-- **(B)** Accettare esplicitamente i 6 fallimenti come **pre-esistenti/upstream** (non causati dal lavoro
-  self-hosted) e autorizzare il commit/tag/push **nonostante** i test rossi — deroga esplicita a §9,
-  documentata come rischio noto.
-- **(C)** Escludere temporaneamente `PasswordValidatorTest` dal gate (es. profilo/`@Disabled`
-  motivato) — sconsigliato senza aver compreso perché la risorsa non si carica.
-
-⏹️ **STOP** — non creo commit/tag/push, non genero l'APK di release, non modifico codice upstream o
-self-hosted, non avvio MOD-021. Il passo successivo dipende da una decisione esplicita del responsabile.
+⏹️ **STOP** — la baseline è versionata. Non genero l'APK definitiva (MOD-021) né configuro/deployo il
+server (MOD-022+). Il passo successivo è **MOD-021 (Android Release APK)** dal codice taggato, su
+decisione del responsabile.

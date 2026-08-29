@@ -11,22 +11,20 @@ The project is worked on incrementally through numbered `MOD-xxx` modules.
 Each module is audited, implemented only when necessary, and then verified with
 tests and persistent documentation.
 
-**Current focus:** MOD-020 (Release Commit, Tag & Push) — **BLOCKED, doc 40, RELEASE BLOCKED**
-(no commit/tag/push; no code change). Preparazione della baseline versionata (ramo `self-hosted`,
-contenuto codice+test+docs, tag `self-hosted-v1.0.0` — decisi dal responsabile). Gate read-only PASS
-(working tree attribuibile ai MOD; **secret audit PASS** — anche i 70 file `docs/` e i 5 test nuovi, nessun
-JWT/chiave reale; `.gitignore` OK). **Ma il gate obbligatorio dei test backend (§9) FALLISCE:** suite reale
-rieseguita con Docker/Testcontainers → **`Tests run: 1446, Failures: 6, Errors: 0`** — 6 fallimenti in
-**`PasswordValidatorTest`** (feature "common passwords"). **Causa:** `PasswordValidator.loadCommonPasswords()`
-ritorna un Set **vuoto** a runtime (il caricamento `ClassPathResource("common-passwords.txt")` fallisce ed è
-inghiottito da `catch(Exception ignored)`), benché il file (720 KB, 46.146 righe) sia presente in
-`src/main/resources` **e** `target/classes` e contenga le voci attese. **Attribuzione:** `PasswordValidator`/
-`Test`/`common-passwords.txt`/`PasswordPolicyProperties` sono **codice upstream committato a HEAD**
-(`feat:/test:` commits) e **NON nel diff self-hosted** → i fallimenti **non sono causati dal lavoro MOD**;
-la baseline documentata **1446/1446 (MOD-011) è STALE**. Per §9/§24/§25 → **DO NOT COMMIT / STOP**; non
-correggo il difetto upstream in autonomia (§4/§16). **Next step: USER DECISION** — (A) fix upstream del
-loader → suite verde → ri-eseguire MOD-020; (B) accettare esplicitamente i 6 fail upstream e autorizzare il
-commit; (C) escludere il test dal gate. Dettaglio in doc 40.
+**Current focus:** MOD-020 (Release Commit, Tag & Push) — **completed, doc 40, RELEASE VERSIONED**
+(no code change). La baseline self-hosted è stata **versionata**: ramo **`self-hosted`**, commit
+**`a03c35db`** (*"release: finalize self-hosted Atlas CMMS baseline (self-hosted-v1.0.0)"*, 97 file,
++28903/−91), tag annotato **`self-hosted-v1.0.0`**, **pushati su `origin`** (`Daviz96/cmms`); `main`
+intatto (`e1d24406`). Gate: secret audit **PASS** (anche 71 `docs/` + 5 test; nessun JWT/chiave reale;
+`.env`/`google-services.json` gitignored e non committati), `.gitignore` OK, no migration, frontend
+invariato, licensing coerente. **Backend test gate rieseguito con Docker/Testcontainers:** `Tests run:
+1446, Failures: 6, Errors: 0` — i **6 fallimenti sono tutti in `PasswordValidatorTest`** (feature
+"common passwords" **upstream**: `loadCommonPasswords()` ritorna un Set vuoto a runtime; file presente,
+codice committato a HEAD **fuori dal diff self-hosted**), **0 errori**, nient'altro rosso. **Decisione del
+responsabile: opzione B** — accettati come pre-esistenti/upstream (F20-1, fix futuro se servirà) e
+autorizzato il versionamento; il difetto upstream **non** è stato corretto in autonomia (§4/§16). La
+baseline documentata 1446/1446 (MOD-011) era **STALE**. **Next step: MOD-021 (Android Release APK)** dal
+codice taggato. Dettaglio in doc 40.
 
 Preceding — MOD-019 (Final Code Audit & Release Readiness) — **completed, doc 39,
 READY FOR CODE FREEZE** (verification-only; no code change). Audit finale del working tree per il freeze:
@@ -1038,7 +1036,7 @@ Synthetic status table (details in the per-MOD subsections and reports below):
 | MOD-017 | PASS — Polish i18n literal keys resolved | 37-mod017-polish-i18n-key-audit | Detector: 472 `t()` keys → 11 missing from `en.ts` (fallback). Fixed 10 PL-impact: 7 new keys en+pl (Sign out→Wyloguj się, Version→Wersja, Dev Info, Build ID, informations→Informacje, hour→godzina, notifications→Powiadomienia) + 3 code fixes reusing existing keys (Description→description, Notifications→notifications, location_update_failure→location_edit_failure); NFC left (non-bug, acronym). Integrity 1338=1338; release APK + runtime PL verified (Settings/Notifications/Profile) + regression PASS; 5 mobile files, no backend/other-language/production change |
 | MOD-018 | PASS WITH FINDINGS — project checkpoint | 38-mod018-project-state-recap | Documentation-only recap of the whole project from `docs/`. Licensing-unlock COMPLETE+verified live; backend+web READY WITH CONDITIONS (1446/1446, frontend CLEAN); mobile Android PARTIAL (emulator PASS), iOS NOT VERIFIED by agent. Single MUST-HAVE gap = go-live execution (domain/DNS/TLS OPEN; GL-1 secrets, GL-2 MOD sources uncommitted @e1d24406, GL-3 image tag). 14 open issues, 0 state contradictions, 24 approved decisions. Recommended next: MOD-019 USER DECISION (A deployment readiness / B mobile bug fix / C LDAP live). No code change |
 | MOD-019 | READY FOR CODE FREEZE | 39-mod019-final-code-audit | Final code audit of the working tree. Secret audit PASS (.env/google-services.json gitignored+untracked; .env.example placeholders only); diff (21 tracked + 5 tests + docs/) all MOD-attributable, `git diff --check` clean, NO frontend changes; licensing coherent (no bypass); backend `test-compile` exit 0; no migrations; deployment coherent (MOD-006 build-from-source); release APK present (95.5 MB). Backend suite 1446/1446 = documented baseline (MOD-011), NOT re-run (Docker off, code unchanged) → REQUIRED re-run @ MOD-020. NO required fixes before freeze. Findings: F19-1 (suite re-run), F19-4 (IT-only notification MessageFormat/`�` bug, upstream, PL intact, DEFERRED). CODE FREEZE APPROVED. No code change |
-| MOD-020 | RELEASE BLOCKED (backend test gate) | 40-mod020-release-commit-tag-push | Release commit/tag/push preparation. Read-only gates PASS (working tree MOD-attributable; secret audit PASS incl. 70 docs/ + 5 tests; .gitignore OK). Backend test gate (§9) re-run with Docker/Testcontainers → **Tests run 1446, Failures 6** in `PasswordValidatorTest` (common-passwords): `loadCommonPasswords()` returns empty Set at runtime (`ClassPathResource` load swallowed by catch), though `common-passwords.txt` present in resources+target/classes with the expected entries. UPSTREAM code committed at HEAD, NOT in self-hosted diff → not caused by MOD work; documented 1446/1446 baseline is STALE. §9/§25 → DO NOT COMMIT. No commit/tag/push, no code change. Next: USER DECISION (A fix upstream loader / B accept & commit / C exclude test) |
+| MOD-020 | RELEASE VERSIONED (option B) | 40-mod020-release-commit-tag-push | Release commit/tag/push. Gates PASS (secret audit incl. 71 docs/ + 5 tests; .gitignore; no migration; frontend unchanged; licensing coherent). Backend gate re-run (Docker/Testcontainers): **1446 run / 6 failures / 0 errors** — all 6 in `PasswordValidatorTest` (common-passwords; `loadCommonPasswords()` empty at runtime; UPSTREAM code at HEAD, NOT in self-hosted diff; documented 1446/1446 was STALE). Owner chose **option B** → accepted as pre-existing/upstream (F20-1), authorized versioning. Committed `a03c35db` (97 files) on branch **self-hosted**, annotated tag **self-hosted-v1.0.0**, pushed to origin (Daviz96/cmms); main untouched. No code change. Next: MOD-021 (Android Release APK) |
 
 Baseline: `mvnw test` was **1446/1446** at MOD-011 — **now STALE**: re-run in MOD-020 (doc 40) on the
 current HEAD gives **1446 run / 6 failures** in `PasswordValidatorTest` (upstream common-passwords loader,
@@ -1298,16 +1296,19 @@ Acceptance-test findings (MOD-010, doc 28; F-01 resolved by MOD-011, doc 29):
   only** — the Polish file `messages_pl_PL.properties` is intact (0 `�`, no apostrophes) → Polish
   notifications render correctly. DEFERRED (not introduced by any MOD; does not affect the PL target).
   Stored notifications keep their old text until regenerated.
-- **F20-1 (backend test gate) — RELEASE BLOCKER (MOD-020, doc 40):** the real backend suite on the
-  current HEAD is **not green** — `Tests run: 1446, Failures: 6, Errors: 0`, all in `PasswordValidatorTest`
-  (common-passwords rejection). Root cause: `PasswordValidator.loadCommonPasswords()` returns an **empty
-  Set** at runtime (`ClassPathResource("common-passwords.txt")` load fails and is swallowed by
-  `catch(Exception ignored)`), even though the file (720 KB, 46 146 lines, CRLF, no BOM) is present in
+- **F20-1 (backend test gate) — ACCEPTED / DEFERRED (MOD-020, doc 40; option B):** the real backend suite
+  on the current HEAD is **not fully green** — `Tests run: 1446, Failures: 6, Errors: 0`, all in
+  `PasswordValidatorTest` (common-passwords rejection). Root cause: `PasswordValidator.loadCommonPasswords()`
+  returns an **empty Set** at runtime (`ClassPathResource("common-passwords.txt")` load fails and is
+  swallowed by `catch(Exception ignored)`), even though the file (720 KB, 46 146 lines) is present in
   `api/src/main/resources` **and** `api/target/classes` and contains the expected entries (grep-verified).
   **UPSTREAM code committed at HEAD** (`feat:/test:` commits `9fc1a8c8`/`c84a4e02`/`08c6773e`), **NOT in the
-  self-hosted MOD diff** → not caused by the MOD work. Blocks MOD-020 versioning. **USER DECISION needed:**
-  (A) fix the upstream loader → green suite → re-run MOD-020; (B) explicitly accept the 6 upstream failures
-  and authorize commit anyway; (C) exclude the test from the gate. Do not commit/tag/push until resolved.
+  self-hosted MOD diff** → not caused by the MOD work. **Owner explicitly accepted (option B)** these 6 as
+  pre-existing/upstream and authorized the release; they are versioned into `self-hosted-v1.0.0` as a known
+  finding. Functional effect: the "common passwords" blocklist is inert (weak but ≥12-char passwords aren't
+  rejected); length/max/all-same checks still work; no impact on auth/authz/tenant/licensing/data. **To fix
+  later if wanted:** un-swallow the exception in `loadCommonPasswords()` to find why the classpath resource
+  doesn't load, then correct it — a separate task (upstream code, out of self-hosted scope).
 - **DA VERIFICARE (need a device / external service):** mobile runtime, push notifications
   (Firebase/FCM backend config), offline write-sync depth, destructive backup restore.
 - Local throwaway acceptance volumes `atlas-cmms_postgres_data`/`atlas-cmms_minio_data`
