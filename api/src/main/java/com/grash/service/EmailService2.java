@@ -53,6 +53,10 @@ public class EmailService2 implements MailService {
     @Value("classpath:/static/images/logo.png")
     private Resource resourceFile;
 
+    // QR code (download the Android APK) embedded inline in invite/welcome emails.
+    @Value("classpath:/static/images/download-apk.png")
+    private Resource qrResource;
+
     @Value("${mail.recipients}")
     private String[] recipients;
 
@@ -156,7 +160,14 @@ public class EmailService2 implements MailService {
                 }
             }
 
-            //helper.addInline("attachment.png", resourceFile);
+            // Inline images referenced via cid:... so email clients don't block them (unlike remote <img>).
+            // Only added when the rendered HTML actually references the CID, to avoid stray attachments.
+            if (htmlBody != null && htmlBody.contains("cid:logo")) {
+                helper.addInline("logo", resourceFile);
+            }
+            if (htmlBody != null && htmlBody.contains("cid:appQr")) {
+                helper.addInline("appQr", qrResource);
+            }
             emailSender.send(message);
         }
     }

@@ -38,9 +38,8 @@
                         <td bgcolor="#ffffff" align="center" valign="top"
                             style="padding: 40px 20px 20px 20px; border-radius: 8px 8px 0px 0px; color: #111111; font-family: 'Lato', Helvetica, Arial, sans-serif; font-size: 48px; font-weight: 400; letter-spacing: 4px; line-height: 48px;">
                             <h1 style="font-size: 48px; font-weight: 400; margin: 2;" th:text="${headerText}"></h1>
-                            <img th:src="@{${#strings.isEmpty(environment.getProperty('white-labeling.logo-paths')) ?
-    environment.getProperty('api.host') + '/images/logo.png' :
-    environment.getProperty('api.host') + '/images/custom-logo.png'}}"
+                            <!-- Logo embedded inline (CID) so email clients do not block it. -->
+                            <img src="cid:logo"
                                  width="150" height="150"
                                  style="display: block; border: 0px; border-radius: 8px;"/>
                         </td>
@@ -102,6 +101,76 @@
                         <td bgcolor="#f4f4f4" align="left"
                             style="padding: 0px 30px 30px 30px; color: #666666; font-family: 'Lato', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 400; line-height: 18px;">
                             <br>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- App download + server configuration section (invite / welcome emails) -->
+<div th:fragment="appSection(apkUrl, serverUrl)">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td th:bgcolor="${backgroundColor}" align="center" style="padding: 0px 10px 20px 10px;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+                    <tr>
+                        <td bgcolor="#ffffff" align="left"
+                            style="padding: 30px 30px 10px 30px; border-radius: 8px 8px 0px 0px; color: #111111; font-family: 'Lato', Helvetica, Arial, sans-serif; font-size: 22px; font-weight: 700;">
+                            <span th:text="#{appSectionTitle}">Get the Android app</span>
+                        </td>
+                    </tr>
+                    <!-- download intro + button -->
+                    <tr>
+                        <td bgcolor="#ffffff" align="left"
+                            style="padding: 8px 30px 0px 30px; color: #666666; font-family: 'Lato', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
+                            <p style="margin: 0;" th:text="#{appDownloadIntro}"></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td bgcolor="#ffffff" align="center" style="padding: 16px 30px 4px 30px;">
+                            <table border="0" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td align="center" style="border-radius: 8px;" th:bgcolor="${backgroundColor}">
+                                        <a th:href="${apkUrl}" target="_blank"
+                                           style="font-size: 18px; font-family: Helvetica, Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 14px 24px; border-radius: 8px; display: inline-block;"
+                                           th:text="#{appDownloadButton}">Download the APK</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- QR -->
+                    <tr>
+                        <td bgcolor="#ffffff" align="center"
+                            style="padding: 8px 30px 0px 30px; color: #666666; font-family: 'Lato', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 20px;">
+                            <p style="margin: 0 0 8px 0;" th:text="#{appQrHint}"></p>
+                            <img src="cid:appQr" width="180" height="180"
+                                 style="display: block; margin: 0 auto; border: 1px solid #eeeeee; border-radius: 8px;"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td bgcolor="#ffffff" align="left"
+                            style="padding: 12px 30px 20px 30px; color: #999999; font-family: 'Lato', Helvetica, Arial, sans-serif; font-size: 13px; line-height: 18px;">
+                            <p style="margin: 0;" th:text="#{appInstallHint}"></p>
+                        </td>
+                    </tr>
+                    <!-- server configuration -->
+                    <tr>
+                        <td bgcolor="#ffffff" align="left"
+                            style="padding: 0px 30px 6px 30px; color: #111111; font-family: 'Lato', Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 700;">
+                            <span th:text="#{appConfigTitle}">Configure the server</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td bgcolor="#ffffff" align="left"
+                            style="padding: 0px 30px 30px 44px; border-radius: 0px 0px 8px 8px; color: #666666; font-family: 'Lato', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
+                            <ol style="margin: 0; padding: 0 0 0 16px;">
+                                <li th:text="#{appConfigStep1}"></li>
+                                <li th:text="#{appConfigStep2(${serverUrl})}"></li>
+                                <li th:text="#{appConfigStep3}"></li>
+                            </ol>
                         </td>
                     </tr>
                 </table>

@@ -1,8 +1,14 @@
 <!--/*@thymesVar id="verifyTokenLink" type="java.lang.String"*/-->
-<div th:replace="fragments/main-layout :: emailTemplate(
-    #{welcome},
-    #{signupHeader},
-    #{happyToWelcome},
-    #{verifyAccount},
-    ${verifyTokenLink}
-    )"></div>
+<div>
+    <div th:replace="fragments/main-layout :: emailTemplate(
+        #{welcome},
+        #{signupHeader},
+        #{happyToWelcome},
+        #{verifyAccount},
+        ${verifyTokenLink}
+        )"></div>
+    <div th:replace="fragments/main-layout :: appSection(
+        ${environment.getProperty('frontend.url')} + '/download/atlas-cmms.apk',
+        ${environment.getProperty('api.host')}
+        )"></div>
+</div>
