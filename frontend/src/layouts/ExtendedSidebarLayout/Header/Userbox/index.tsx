@@ -33,7 +33,6 @@ import HelpTwoToneIcon from '@mui/icons-material/HelpTwoTone';
 import PhoneAndroidTwoToneIcon from '@mui/icons-material/PhoneAndroidTwoTone';
 import CloseIcon from '@mui/icons-material/Close';
 import { QRCodeSVG } from 'qrcode.react';
-import { homeUrl } from '../../../../config';
 
 const DotLegend = styled('span')(
   ({ theme }) => `
@@ -502,7 +501,7 @@ function HeaderUserbox() {
             }}
           >
             <QRCodeSVG
-              value={`${homeUrl}mb-app`}
+              value={`${window.location.origin}/download/atlas-cmms.apk`}
               size={220}
               level="H"
               includeMargin
@@ -516,8 +515,8 @@ function HeaderUserbox() {
           >
             {t('scan_qr_to_download')}
           </Typography>
-          <Link href={`${homeUrl}mb-app`} variant="body2">
-            {`${homeUrl}mb-app`}
+          <Link href={`${window.location.origin}/download/atlas-cmms.apk`} variant="body2">
+            {`${window.location.origin}/download/atlas-cmms.apk`}
           </Link>
         </DialogContent>
       </Dialog>
