@@ -45,18 +45,24 @@ in 25.5s, `SELF_HOSTED`. Solo i noti WARN Liquibase (changelog con spazio inizia
 `/srv/docker/atlas/docker-compose.yml`, volumi named-con-bind su `/srv/data/databases/atlas/{postgres,minio}`
 (**mai `down -v`**). Runbook usato: `dev-docs/deploy-v1.1.0-runbook.md`. NB: SSH pilotato dall'assistente **non
 possibile** (chiave con passphrase, nessun agent, + password sudo) → deploy via runbook eseguito dall'utente.
-**Da fare:** smoke-test funzionale (nuovo flusso eliminazione account 2-passi, ricerca WO, invito, download allegati)
-e decidere se aggiungere ancora la restrizione "elimina solo admin"
+Smoke-test v1.1.0 **OK** (login, eliminazione 2-passi, invito, upload; **ricerca WO / Bug 3 CONFERMATO** via seed
+`dev-docs/seed_test_data.py`, `totalElements=6` senza NPE). **`v1.2.0` COSTRUITA e PUSHATA su GitHub (commit
+`5ea45b81`), NON ancora deployata:** (a) feature admin "Crea utente" con **link imposta-password**; (b) QR/dialog
+"scarica app" → **APK self-hosted** (non app ufficiale). Immagini `self-hosted-v1.2.0` (backend+frontend) taggate
+in locale. Deploy = stesso runbook (swap `api`+`frontend` → `:self-hosted-v1.2.0`, `pull`+`up -d`+`restart nginx`,
+backup DB). Poi decidere se aggiungere la restrizione "elimina solo admin"
 ([docs/restrict-user-deletion-to-admins-plan.md](restrict-user-deletion-to-admins-plan.md)) sopra al nuovo flusso.
 **Dettaglio completo, file:line, gotcha operativi in
 [docs/live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md)** e piano
 [docs/upstream-sync-plan.md](upstream-sync-plan.md). (Runbook deploy: `dev-docs/upgrade-to-self-hosted.md`.)
 
-**Backlog / piani pronti (non implementati, 2026-09-01):**
-- **Scelta admin "Invita via email ⇄ Crea utente"** nello stesso dialog (oggi aut-aut su `INVITATION_VIA_EMAIL`;
-  toggle solo-frontend). **+ richiesta:** il modo "Crea utente" deve inviare una **mail di benvenuto con credenziali**
-  (email+password), suggerimento cambio password e link login → richiede **piccola aggiunta backend** (nuovo template
-  `account-created.html` + invio). Piano: [docs/admin-invite-vs-create-user-plan.md](admin-invite-vs-create-user-plan.md).
+**Backlog / piani (2026-09-01/02):**
+- ✅ **Scelta admin "Invita ⇄ Crea utente" — IMPLEMENTATA in `v1.2.0`** (commit `5ea45b81`): toggle nel dialog;
+  "Crea utente" crea l'account (enabled, password random inutilizzabile) e invia mail di benvenuto con **link
+  imposta-password** — l'utente sceglie la propria password, **nessuna password in chiaro via mail** (variante scelta
+  rispetto al piano originale). `POST /users/create-by-admin` + `POST /auth/set-password`
+  (`VerificationTokenService.confirmSetPassword`), template `account-created.html`, pagina `/account/set-password`,
+  DTO `CreateUserByAdminDTO`/`SetPasswordRequest`. Piano: [docs/admin-invite-vs-create-user-plan.md](admin-invite-vs-create-user-plan.md).
 - **Eliminazione utenti solo agli admin** (blocco auto-eliminazione). ⚠️ Scoperto che l'auto-eliminazione usa
   **`DELETE /auth`** (`AuthController.deleteAccount`, `@PreAuthorize permitAll`) = **HARD delete**; se l'utente
   possiede la company → `companyService.delete()` **cancella l'intera org**. Fix proposta: rimuovere `DELETE /auth`
