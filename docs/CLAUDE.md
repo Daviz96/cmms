@@ -49,6 +49,13 @@ di test** via `dev-docs/seed_test_data.py` (Python 3 stdlib) + test funzionale (
   possiede la company → `companyService.delete()` **cancella l'intera org**. Fix proposta: rimuovere `DELETE /auth`
   + togliere il ramo self in `softDeleteUser`. Invasività bassa. Piano:
   [docs/restrict-user-deletion-to-admins-plan.md](restrict-user-deletion-to-admins-plan.md).
+  **NB:** upstream ha già rifatto l'eliminazione account (flusso request+conferma, commit `d7e7ec00`/`714a99dc`) →
+  coordinare con il sync (sotto) prima di implementare questo piano.
+- **Sync col fork upstream** (`Grashjs/cmms`). Remote `upstream` configurato + fetchato. Divergenza dal fork
+  `e1d24406`: upstream **+32 commit**, noi **+4**. Dry-run merge fatto: **solo 4 conflitti testuali (1 hunk)** —
+  `MinioService.java` + 3 `mailMessages*`; **129 file auto-mergiati** (rileggere i sensibili: `AuthController`,
+  `UserService`, `WorkOrderService`, `GCPService`, `application.yml`). Attenzione a migrazione DB `Part.version`
+  (`bdd94408`). Piano completo: [docs/upstream-sync-plan.md](upstream-sync-plan.md). Da eseguire in sessione dedicata.
 
 Preceding — MOD-020 (Release Commit, Tag & Push) — **completed, doc 40, RELEASE VERSIONED**
 (no code change). La baseline self-hosted è stata **versionata**: ramo **`self-hosted`**, commit
