@@ -421,6 +421,7 @@ public class UserService {
      * password; the user receives a welcome email with a one-time link to set their own password.
      * No password ever travels by email. Mirrors the invite flow's role/company/limit checks.
      */
+    @org.springframework.transaction.annotation.Transactional
     public SuccessResponse createUserByAdmin(CreateUserByAdminDTO req, User inviter) {
         throwIfEmailNotificationsNotEnabled();
         String email = req.getEmail().toLowerCase();
