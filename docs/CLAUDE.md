@@ -31,13 +31,21 @@ DB originale preservato. Frontend live = immagine **upstream** `intelloop/atlas-
   `UserService.invalidateSessionsById(id)` (ricarica fresco per id, no-op se assente); `AuthController.logout` lo usa;
   rimosso il log temporaneo. `invalidateSessions(User)` invariato (serve ai caller che mutano l'entità).
 
-**Stato:** `v1.0.2` (backend bug3+log, frontend bug2) **deployata** sul live; rete Caddy resa **permanente**
-dall'utente. Bug 1 **diagnosticato** e **fixato** → **`v1.0.3` = solo rebuild backend**: `docker build ./api` →
-tag `self-hosted-v1.0.3` (+`latest`) → push (utente `docker login`) → server: swap `api` → `pull api` →
-`up -d api` → **`restart nginx`** → verificare eliminazione account (niente più `conflict_error`). Poi **seed dati
-di test** via `dev-docs/seed_test_data.py` (Python 3 stdlib) + test funzionale (ricerca WO / Bug 3, invito / Bug 2).
+**Stato (aggiornato 2026-09-01, sera):** `v1.0.2`+`v1.0.3` (fix Bug 1/2/3) deployati sul live; rete Caddy
+**permanente**. **Sync upstream ADOTTATO in `self-hosted`** (ff-merge `7920c0d3`): integrati 32 commit upstream
+(rate-limiting login, PDF RTL/CJK, **flusso eliminazione account a 2 passi con conferma email** che sostituisce il
+pericoloso `DELETE /auth`, signed-URL caching, webhook, ecc.). Conflitti risolti (4: `MinioService` + 3
+`mailMessages*`). Nostri fix e config self-hosted **preservati e verificati**. **Validazione locale completa**:
+backend+frontend+test compilano; smoke-test full-stack su DB fresco → **Liquibase applica tutte le migration
+(incl. `fix_part_version_null` upstream, safe: backfill+NOT NULL), `SELF_HOSTED`, `Started ApiApplication`**.
+Immagini **`self-hosted-v1.1.0`** (backend+frontend) pronte, non ancora pushate/deployate. Branch `sync-upstream`
+pushato su origin. **Prossimo:** push immagini `v1.1.0` + deploy sul live (backup DB → swap `api`+`frontend` →
+`pull`+`up -d`+`restart nginx`). Server usa **bind-mount** `/srv/data/databases/atlas/{postgres,minio}` (non volumi
+denominati); backup DB via `pg_dump` nel container. NB: SSH pilotato dall'assistente **non possibile** (chiave con
+passphrase, nessun agent, + password sudo) → deploy via runbook che esegue l'utente.
 **Dettaglio completo, file:line, gotcha operativi in
-[docs/live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md).** (Runbook deploy: `dev-docs/upgrade-to-self-hosted.md`.)
+[docs/live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md)** e piano
+[docs/upstream-sync-plan.md](upstream-sync-plan.md). (Runbook deploy: `dev-docs/upgrade-to-self-hosted.md`.)
 
 **Backlog / piani pronti (non implementati, 2026-09-01):**
 - **Scelta admin "Invita via email ⇄ Crea utente"** nello stesso dialog (oggi aut-aut su `INVITATION_VIA_EMAIL`;
