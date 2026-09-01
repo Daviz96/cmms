@@ -268,6 +268,18 @@ public class AuthController {
         httpServletResponse.setStatus(302);
     }
 
+    @PostMapping(value = "/set-password", produces = "application/json")
+    @PreAuthorize("permitAll()")
+    public SuccessResponse setPassword(
+            @Parameter(description = "Set-password request") @Valid @RequestBody SetPasswordRequest request) {
+        try {
+            verificationTokenService.confirmSetPassword(request.getToken(), request.getNewPassword());
+            return new SuccessResponse(true, "Password set successfully");
+        } catch (Exception e) {
+            throw new CustomException(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
 }
 
 

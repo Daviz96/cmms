@@ -66,6 +66,21 @@ public class VerificationTokenService {
         return savedUser;
     }
 
+    /**
+     * Set a user's password from a one-time token, where the password is supplied by the user
+     * (welcome / set-password flow). Unlike {@link #confirmResetPassword(String)}, the password is
+     * NOT taken from the token payload but from the request.
+     */
+    public User confirmSetPassword(String token, String newPassword) throws Exception {
+        VerificationToken verificationToken = verifyToken(token);
+        User user = verificationToken.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        User savedUser = userService.invalidateSessions(user);
+        verificationTokenRepository.deleteAll(
+                verificationTokenRepository.findAllVerificationTokenEntityByUser(user));
+        return savedUser;
+    }
+
     public void confirmDeleteAccount(String token) throws Exception {
         VerificationToken verificationToken = verifyToken(token);
         User user = verificationToken.getUser();

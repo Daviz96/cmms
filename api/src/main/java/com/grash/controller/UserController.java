@@ -62,6 +62,13 @@ public class UserController {
         return userService.inviteUsers(invitation, user);
     }
 
+    @PostMapping("/create-by-admin")
+    @PreAuthorize("hasRole('ROLE_CLIENT')")
+    public SuccessResponse createByAdmin(@Parameter(description = "New user data") @Valid @RequestBody CreateUserByAdminDTO req,
+                                         @Parameter(hidden = true) @CurrentUser User user) {
+        return userService.createUserByAdmin(req, user);
+    }
+
     @GetMapping("/invitations/last-week")
     @PreAuthorize("hasRole('ROLE_CLIENT')")
     public Collection<UserInvitationMiniDTO> getLastWeekInvitations(@Parameter(hidden = true) @CurrentUser User user) {

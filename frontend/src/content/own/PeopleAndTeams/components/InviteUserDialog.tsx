@@ -10,11 +10,13 @@ import {
   InputAdornment,
   Paper,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography
 } from '@mui/material';
 import { grey } from '@mui/material/colors';
 import UserRoleCardList from '../UserRoleCardList';
-import { EmailOutlined } from '@mui/icons-material';
+import { EmailOutlined, PersonAddAlt1Outlined } from '@mui/icons-material';
 import { inviteUsers } from '../../../../slices/user';
 import * as React from 'react';
 import { useContext, useRef, useState } from 'react';
@@ -23,8 +25,7 @@ import { emailRegExp } from '../../../../utils/validators';
 import { CustomSnackBarContext } from '../../../../contexts/CustomSnackBarContext';
 import { useDispatch, useSelector } from '../../../../store';
 import { isEmailVerificationEnabled } from '../../../../config';
-import CreateUser from './CreateUser';
-import { Simulate } from 'react-dom/test-utils';
+import CreateUserByAdminForm from './CreateUserByAdminForm';
 
 export default function InviteUserDialog({
   open,
@@ -38,6 +39,9 @@ export default function InviteUserDialog({
   initialEmail?: string;
 }) {
   const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
+  const [mode, setMode] = useState<'invite' | 'create'>(
+    isEmailVerificationEnabled ? 'invite' : 'create'
+  );
   const [roleId, setRoleId] = useState<number>();
   const { t } = useTranslation();
   const [emails, setEmails] = useState<string[]>([]);
@@ -100,6 +104,25 @@ export default function InviteUserDialog({
         }}
       >
         <Box sx={{ width: '95%' }}>
+          <ToggleButtonGroup
+            color="primary"
+            value={mode}
+            exclusive
+            fullWidth
+            onChange={(_e, next) => {
+              if (next) setMode(next);
+            }}
+            sx={{ mb: 2 }}
+          >
+            <ToggleButton value="invite">
+              <EmailOutlined sx={{ mr: 1 }} fontSize="small" />
+              {t('Invite by email')}
+            </ToggleButton>
+            <ToggleButton value="create">
+              <PersonAddAlt1Outlined sx={{ mr: 1 }} fontSize="small" />
+              {t('Create user')}
+            </ToggleButton>
+          </ToggleButtonGroup>
           <Paper
             elevation={0}
             sx={{
@@ -125,7 +148,7 @@ export default function InviteUserDialog({
           <Box pb={3}>
             <UserRoleCardList onChange={onRoleChange} />
           </Box>
-          {isEmailVerificationEnabled ? (
+          {mode === 'invite' ? (
             <>
               <Grid container spacing={1}>
                 {emails.map((email, index) => (
@@ -217,7 +240,7 @@ export default function InviteUserDialog({
             </>
           ) : (
             roleId && (
-              <CreateUser
+              <CreateUserByAdminForm
                 roleId={roleId}
                 onClose={onClose}
                 onRefreshUsers={onRefreshUsers}

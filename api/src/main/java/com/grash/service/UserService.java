@@ -3,6 +3,7 @@ package com.grash.service;
 import com.grash.advancedsearch.SearchCriteria;
 import com.grash.advancedsearch.SpecificationBuilder;
 import com.grash.dto.AuthTokens;
+import com.grash.dto.CreateUserByAdminDTO;
 import com.grash.dto.SignupSuccessResponse;
 import com.grash.dto.SuccessResponse;
 import com.grash.dto.UserInvitationDTO;
@@ -413,6 +414,45 @@ public class UserService {
                                 Helper.getLocale(inviter)), variables, "invite.html",
                         Helper.getLocale(inviter), null);
         } else throw new CustomException("Email already in use", HttpStatus.NOT_ACCEPTABLE);
+    }
+
+    /**
+     * Create a user manually (by an admin). The account is created enabled but WITHOUT a usable
+     * password; the user receives a welcome email with a one-time link to set their own password.
+     * No password ever travels by email. Mirrors the invite flow's role/company/limit checks.
+     */
+    public SuccessResponse createUserByAdmin(CreateUserByAdminDTO req, User inviter) {
+        throwIfEmailNotificationsNotEnabled();
+        String email = req.getEmail().toLowerCase();
+        if (userRepository.existsByEmailIgnoreCase(email) || !Helper.isValidEmailAddress(email))
+            throw new CustomException("Email already in use or invalid", HttpStatus.NOT_ACCEPTABLE);
+        Role role = roleService.findById(req.getRole().getId())
+                .filter(r -> r.belongsToCompany(inviter.getCompany()))
+                .orElseThrow(() -> new CustomException("Role not found", HttpStatus.NOT_FOUND));
+
+        User user = new User();
+        user.setEmail(email);
+        user.setFirstName(req.getFirstName());
+        user.setLastName(req.getLastName());
+        user.setPhone(req.getPhone());
+        user.setRole(role);
+        user.setCompany(inviter.getCompany());
+        user.setUsername(Helper.generateStringId());
+        // Unusable random password until the user sets their own via the emailed link.
+        user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+        userRepository.save(user);
+        enableUser(user); // enabled + subscription flag + cache + usage-limit check (reused)
+
+        String token = UUID.randomUUID().toString();
+        verificationTokenRepository.save(new VerificationToken(token, user, null));
+        Map<String, Object> variables = new HashMap<String, Object>() {{
+            put("setPasswordLink", frontendUrl + "/account/set-password?token=" + token);
+        }};
+        mailServiceFactory.getMailService().sendMessageUsingThymeleafTemplate(new String[]{email},
+                messageSource.getMessage("accountCreatedSubject",
+                        new String[]{brandingService.getBrandConfig().getName()}, Helper.getLocale(inviter)),
+                variables, "account-created.html", Helper.getLocale(inviter), null);
+        return new SuccessResponse(true, "User created; set-password email sent");
     }
 
     @org.springframework.transaction.annotation.Transactional

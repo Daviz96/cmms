@@ -269,6 +269,24 @@ export const inviteUsers =
       dispatch(slice.actions.addLastWeekInvitations({ invitations }));
   };
 
+export const createUserByAdmin =
+  (payload: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    roleId: number;
+  }): AppThunk =>
+  async () => {
+    await api.post<{ success: boolean }>('users/create-by-admin', {
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      email: payload.email,
+      phone: payload.phone,
+      role: { id: payload.roleId }
+    });
+  };
+
 export const clearSingleUser = (): AppThunk => async (dispatch) => {
   dispatch(slice.actions.clearSingleUser({}));
 };

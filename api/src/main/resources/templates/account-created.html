@@ -1,0 +1,8 @@
+<!--/*@thymesVar id="setPasswordLink" type="java.lang.String"*/-->
+<div th:replace="fragments/main-layout :: emailTemplate(
+    #{accountCreatedTitle(${brandConfig.getName()})},
+    #{accountCreatedHeader(${brandConfig.getName()})},
+    #{accountCreatedMessage},
+    #{accountCreatedButton},
+    ${setPasswordLink}
+    )"></div>

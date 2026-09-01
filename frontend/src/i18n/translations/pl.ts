@@ -1839,6 +1839,20 @@ const plJSON = {
   select_date_range: 'Wybierz zakres dat',
   get_mobile_app: 'Pobierz aplikację mobilną',
   scan_qr_to_download: 'Zeskanuj kod QR, aby pobrać aplikację mobilną',
+  'Invite by email': 'Zaproś przez e-mail',
+  'Create user': 'Utwórz użytkownika',
+  'The user will receive an email to set their own password.':
+    'Użytkownik otrzyma e-mail, aby ustawić własne hasło.',
+  'User created. A set-password email has been sent.':
+    'Użytkownik utworzony. Wysłano e-mail do ustawienia hasła.',
+  'Set your password': 'Ustaw hasło',
+  'Choose a password to activate your account.':
+    'Wybierz hasło, aby aktywować konto.',
+  'Invalid or missing link.': 'Nieprawidłowy lub brakujący link.',
+  'Confirm password': 'Potwierdź hasło',
+  'Passwords must match': 'Hasła muszą się zgadzać',
+  'Password set successfully. Please log in.':
+    'Hasło ustawione pomyślnie. Zaloguj się.',
   integrations: 'Integracje',
   api_keys: 'Klucze API',
   connectors: 'Konektory',

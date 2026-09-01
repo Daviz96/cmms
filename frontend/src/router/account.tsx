@@ -27,6 +27,9 @@ const RegisterCover = Loader(
 const RecoverPassword = Loader(
   lazy(() => import('../content/pages/Auth/RecoverPassword'))
 );
+const SetPassword = Loader(
+  lazy(() => import('../content/pages/Auth/SetPassword'))
+);
 const VerifyEmail = Loader(
   lazy(() => import('../content/pages/Auth/VerifyEmail'))
 );
@@ -50,6 +53,10 @@ const accountRoutes = [
   {
     path: 'recover-password',
     element: <RecoverPassword />
+  },
+  {
+    path: 'set-password',
+    element: <SetPassword />
   },
   {
     path: 'verify',
