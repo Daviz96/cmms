@@ -8,10 +8,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.function.Supplier;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,7 +31,12 @@ class MinioServiceTest {
     }
 
     private MinioService configuredService(MinioClient client) {
-        MinioService service = new MinioService();
+        // Upstream added a CacheService dependency to MinioService. Use a pass-through mock so the
+        // underlying signed-URL generation (and the MinioClient call it makes) still runs under test.
+        CacheService cacheService = mock(CacheService.class);
+        when(cacheService.getCachedOrGenerateSignedUrl(any(), anyLong(), any()))
+                .thenAnswer(invocation -> ((Supplier<String>) invocation.getArgument(2)).get());
+        MinioService service = new MinioService(cacheService);
         ReflectionTestUtils.setField(service, "minioClient", client);
         ReflectionTestUtils.setField(service, "minioBucket", "bucket");
         ReflectionTestUtils.setField(service, "minioEndpoint", "http://minio:9000");
