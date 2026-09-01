@@ -8,3 +8,7 @@ docker-compose-dev.yml
 logo
 *.lic
 docker-compose-minio.yml
+
+# Local-only working files (never pushed): dev runbooks/seed scripts and release artifacts (large APKs)
+dev-docs/
+release/

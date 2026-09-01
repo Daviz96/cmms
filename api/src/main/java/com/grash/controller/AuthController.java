@@ -165,7 +165,10 @@ public class AuthController {
     @PostMapping("/logout")
     @PreAuthorize("permitAll()")
     public SuccessResponse logout(@Parameter(hidden = true) @CurrentUser User user) {
-        userService.invalidateSessions(user);
+        // Re-load the user by id instead of saving the (possibly stale) @CurrentUser entity: after a
+        // self account deletion (DELETE /auth hard-deletes the row) the follow-up logout flushed a
+        // stale/absent entity, raising StaleObjectStateException -> 409 "conflict_error". See UserService.
+        userService.invalidateSessionsById(user.getId());
         return new SuccessResponse(true, "Logged out successfully");
     }
 

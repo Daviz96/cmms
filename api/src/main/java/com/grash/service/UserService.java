@@ -418,6 +418,25 @@ public class UserService {
         return saved;
     }
 
+    /**
+     * Invalidate a user's sessions by re-loading the current persistent state by id, so we never
+     * flush a stale/detached snapshot. Used by logout, where the {@code @CurrentUser} entity may be
+     * out of sync with the DB (e.g. the account was just soft-deleted in a prior request: email
+     * renamed + disabled). Saving that stale copy caused an UPDATE hitting 0 rows ->
+     * StaleObjectStateException -> HTTP 409 "conflict_error". If the user no longer exists, this is
+     * a no-op (logout still succeeds). Unlike {@link #invalidateSessions(User)}, this does NOT persist
+     * caller-side mutations, so it must only be used when the sole intent is to invalidate sessions.
+     */
+    public void invalidateSessionsById(Long userId) {
+        if (userId == null) return;
+        userRepository.findById(userId).ifPresent(fresh -> {
+            fresh.setSessionInvalidatedAt(new Date());
+            User saved = userRepository.save(fresh);
+            cacheService.evictUserFromCache(saved.getEmail());
+            refreshTokenService.revokeAllForUser(saved);
+        });
+    }
+
     public Collection<User> saveAll(Collection<User> users) {
         return userRepository.saveAll(users);
     }

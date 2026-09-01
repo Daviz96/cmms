@@ -24,6 +24,7 @@ import com.grash.model.enums.webhook.WOField;
 import com.grash.model.enums.webhook.WebhookEvent;
 import com.grash.model.enums.workflow.WFMainCondition;
 
+import com.grash.repository.SuperAccountRelationRepository;
 import com.grash.repository.WorkOrderRepository;
 import com.grash.utils.Helper;
 import com.grash.utils.MultipartFileImpl;
@@ -69,6 +70,7 @@ import static com.grash.utils.Consts.usageBasedFreeLimits;
 @Slf4j
 public class WorkOrderService {
     private final WorkOrderRepository workOrderRepository;
+    private final SuperAccountRelationRepository superAccountRelationRepository;
     private final LocationService locationService;
     private final CustomerService customerService;
     private final TeamService teamService;
@@ -572,11 +574,11 @@ public class WorkOrderService {
 
     public SearchCriteria getSearchCriteria(User user, SearchCriteria searchCriteria) {
         if (user.getRole().getRoleType().equals(RoleType.ROLE_CLIENT)) {
-            if (!user.getSuperAccountRelations().isEmpty()) {
-                List<Long> childCompanyIds = user.getSuperAccountRelations().stream()
-                        .map(rel -> rel.getChildUser().getCompany().getId())
-                        .distinct()
-                        .toList();
+            // Session-safe: fetch child company ids with a direct query instead of navigating the LAZY
+            // User.superAccountRelations collection on the detached @CurrentUser (would throw
+            // LazyInitializationException outside a Hibernate session).
+            List<Long> childCompanyIds = superAccountRelationRepository.findChildCompanyIdsBySuperUserId(user.getId());
+            if (!childCompanyIds.isEmpty()) {
                 searchCriteria.getFilterFields().add(FilterField.builder()
                         .field("company")
                         .operation("inm")
