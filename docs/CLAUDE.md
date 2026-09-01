@@ -38,11 +38,16 @@ pericoloso `DELETE /auth`, signed-URL caching, webhook, ecc.). Conflitti risolti
 `mailMessages*`). Nostri fix e config self-hosted **preservati e verificati**. **Validazione locale completa**:
 backend+frontend+test compilano; smoke-test full-stack su DB fresco → **Liquibase applica tutte le migration
 (incl. `fix_part_version_null` upstream, safe: backfill+NOT NULL), `SELF_HOSTED`, `Started ApiApplication`**.
-Immagini **`self-hosted-v1.1.0`** (backend+frontend) pronte, non ancora pushate/deployate. Branch `sync-upstream`
-pushato su origin. **Prossimo:** push immagini `v1.1.0` + deploy sul live (backup DB → swap `api`+`frontend` →
-`pull`+`up -d`+`restart nginx`). Server usa **bind-mount** `/srv/data/databases/atlas/{postgres,minio}` (non volumi
-denominati); backup DB via `pg_dump` nel container. NB: SSH pilotato dall'assistente **non possibile** (chiave con
-passphrase, nessun agent, + password sudo) → deploy via runbook che esegue l'utente.
+Immagini **`self-hosted-v1.1.0`** (backend+frontend) **DEPLOYATE sul live (2026-09-01 sera)**: backup DB fatto
+(`pg_dump`), migration upstream **`fix_part_version_null` applicata sui DATI REALI in 89ms**, `Started ApiApplication`
+in 25.5s, `SELF_HOSTED`. Solo i noti WARN Liquibase (changelog con spazio iniziale), nessun errore. Dati preservati
+(postgres/minio non ricreati). Branch `sync-upstream` pushato; `self-hosted` a `310e25a4`. Server compose:
+`/srv/docker/atlas/docker-compose.yml`, volumi named-con-bind su `/srv/data/databases/atlas/{postgres,minio}`
+(**mai `down -v`**). Runbook usato: `dev-docs/deploy-v1.1.0-runbook.md`. NB: SSH pilotato dall'assistente **non
+possibile** (chiave con passphrase, nessun agent, + password sudo) → deploy via runbook eseguito dall'utente.
+**Da fare:** smoke-test funzionale (nuovo flusso eliminazione account 2-passi, ricerca WO, invito, download allegati)
+e decidere se aggiungere ancora la restrizione "elimina solo admin"
+([docs/restrict-user-deletion-to-admins-plan.md](restrict-user-deletion-to-admins-plan.md)) sopra al nuovo flusso.
 **Dettaglio completo, file:line, gotcha operativi in
 [docs/live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md)** e piano
 [docs/upstream-sync-plan.md](upstream-sync-plan.md). (Runbook deploy: `dev-docs/upgrade-to-self-hosted.md`.)
