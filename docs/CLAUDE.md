@@ -11,25 +11,13 @@ The project is worked on incrementally through numbered `MOD-xxx` modules.
 Each module is audited, implemented only when necessary, and then verified with
 tests and persistent documentation.
 
-**Current focus:** **LIVE DEPLOYMENT + post-release bug-fixing → `v1.0.2` in preparazione** (post MOD-020).
-Il backend custom è **live in produzione** su `https://cmms.firmabratex.pl` (LAN-only, Caddy wildcard TLS) —
-immagine `dablio96/self-hosted-cmms-backend:self-hosted-v1.0.1` (commit `decbc2cd`), `SELF_HOSTED` attivo,
-DB originale preservato. Frontend live = immagine **upstream** `intelloop/atlas-cmms-frontend` (non buildata dal repo).
-**3 bug** (tutti codice upstream emerso ora) — stato al 2026-09-01:
-- **Bug 2 (invito non parte)** — root cause **confermata**: il frontend **upstream** manda `disableSendingEmail:true`;
-  il backend `UserService.invite():379` è **corretto** (il *nostro* `InviteUserDialog.tsx:181` passa `false`). NB:
-  `disableSendingEmail:true` è **legittimo** in auto-registrazione (`RegisterJWT.tsx:103`) → scartata l'Opzione A
-  (backend "invia sempre") perché romperebbe quel caso. **Scelta: Opzione B** = buildare+deployare il **nostro**
-  frontend (`docker build ./frontend`) e sostituire l'immagine upstream. Nessuna modifica codice necessaria.
-- **Bug 3 (NPE ricerca Work Order)** — **FIXATO nel codice**: `WorkOrderService.getSearchCriteria` non naviga più la
-  collezione LAZY `getSuperAccountRelations()` su `@CurrentUser` detached; usa una query JPQL session-safe
-  `SuperAccountRelationRepository.findChildCompanyIdsBySuperUserId(userId)`. Da validare a runtime con dati di test.
-- **Bug 1 (`conflict_error` auto-eliminazione)** — **causa confermata dal trace (v1.0.2)**: NON è `softDeleteUser`
-  (che riesce), ma il **`logout` chiamato subito dopo** → `invalidateSessions(@CurrentUser user)` salva un'entità
-  **detached/inesistente** (l'auto-eliminazione `DELETE /auth` → `AuthController.deleteAccount` fa **HARD delete**
-  della riga user) → UPDATE 0 righe → `StaleObjectStateException` (User senza `@Version`) → 409. **FIXATO in v1.0.3**: nuovo
-  `UserService.invalidateSessionsById(id)` (ricarica fresco per id, no-op se assente); `AuthController.logout` lo usa;
-  rimosso il log temporaneo. `invalidateSessions(User)` invariato (serve ai caller che mutano l'entità).
+**Current focus:** **PRODUZIONE STABILE — manutenzione e fix incrementali** (post sync upstream). Deployment
+self-hosted **live** su `https://cmms.firmabratex.pl` (LAN-only, dietro **Caddy** TLS wildcard; `SELF_HOSTED`;
+DB originale preservato). Fork `Daviz96/cmms`, branch **`self-hosted`**. I **bug storici 1/2/3** e il **sync upstream**
+sono **risolti e live**. Ora: piccoli fix di UI/i18n accumulati in un **batch frontend** (vedi sotto), da buildare
+quando pieno. **📊 Stato reale + changelog storico completo: [docs/PROJECT-STATUS.md](PROJECT-STATUS.md)**
+(fonte di verità). Dettaglio bug storici → [live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md);
+sync upstream → [upstream-sync-plan.md](upstream-sync-plan.md).
 
 **Stato (aggiornato 2026-09-02):** tutte le versioni fino a **`v1.2.1` (backend)** + **`v1.2.0` (frontend)** sono
 **LIVE** su `cmms.firmabratex.pl`. Ultimo backend `v1.2.1`: fix mail "imposta password" (`accountCreatedSubject`
@@ -1058,6 +1046,11 @@ solution without approval.
 ---
 
 ## Current Project State
+
+> **Nota (2026-09-02):** la tabella qui sotto è il **record storico** del lavoro `MOD-001..020` fino alla baseline
+> **`v1.0.0`**. Lo **stato live attuale** (fino a **backend `v1.2.1`** / **frontend `v1.2.0`**) e il changelog
+> post-v1.0.0 (v1.0.1 mail APK, v1.0.2/1.0.3 bug 1/2/3, v1.1.0 sync upstream, v1.2.0 crea-utente, v1.2.1 fix mail)
+> sono in **[docs/PROJECT-STATUS.md](PROJECT-STATUS.md)** e nella sezione *Current focus* in cima a questo file.
 
 Synthetic status table (details in the per-MOD subsections and reports below):
 
