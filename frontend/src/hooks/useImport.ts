@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { apiUrl } from 'src/config';
-import api from 'src/utils/api';
+import api, { refreshAccessToken } from 'src/utils/api';
 import useAuth from './useAuth';
 
 interface UseImportReturn {
@@ -33,17 +33,43 @@ export const useImport = (): UseImportReturn => {
   const [loadingImport, setLoadingImport] = useState<boolean>(false);
   const [stompClient, setStompClient] = useState(null);
   const { user } = useAuth();
-  // Initialize WebSocket connection
+  // Initialize WebSocket connection.
+  // The STOMP CONNECT authenticates with the access token; if that token is expired the server
+  // rejects the CONNECT (silent failure -> "WebSocket connection not initialized" on import).
+  // So on a CONNECT error we refresh the token once and reconnect with the fresh one.
   useEffect(() => {
-    const socket = new SockJS(`${apiUrl}ws`);
-    const client = Stomp.over(socket);
-    client.connect({ token: localStorage.getItem('accessToken') }, () => {
-      setStompClient(client);
-    });
+    let disposed = false;
+    let activeClient: any = null;
+    let refreshTried = false;
+
+    const openConnection = () => {
+      const socket = new SockJS(`${apiUrl}ws`);
+      const client = Stomp.over(socket);
+      activeClient = client;
+      client.connect(
+        { token: localStorage.getItem('accessToken') },
+        () => {
+          if (!disposed) setStompClient(client);
+        },
+        async () => {
+          if (disposed || refreshTried) return;
+          refreshTried = true;
+          const refreshed = await refreshAccessToken();
+          if (refreshed && !disposed) openConnection();
+        }
+      );
+    };
+
+    openConnection();
 
     return () => {
-      if (client) {
-        client.disconnect();
+      disposed = true;
+      if (activeClient) {
+        try {
+          activeClient.disconnect();
+        } catch (e) {
+          /* ignore */
+        }
       }
     };
   }, []);

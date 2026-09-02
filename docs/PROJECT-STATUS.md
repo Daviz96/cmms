@@ -52,7 +52,11 @@ in quei punti). Tag git: solo `self-hosted-v1.0.0` (le altre versioni = commit +
 
 **Frontend — prossima rebuild `v1.2.x`:**
 - `timers` → "Timery" (traduzione PL) — commit `377fa3bd`.
-- *(aggiungere qui i prossimi ritocchi UI/i18n che emergono dai test)*
+- **WS import/export/notifiche: refresh token + reconnect** — la WS (SockJS/STOMP) falliva in silenzio con token
+  **scaduto** (CONNECT rifiutato → "WebSocket connection not initialized"; import/export KO, notifiche non-live).
+  Ora su errore di CONNECT rinfresca il token (`refreshAccessToken()`) e riconnette. File: `hooks/useImport.ts`,
+  `hooks/useExport.ts`, `layouts/.../Notifications/index.tsx`.
+- *(aggiungere qui i prossimi ritocchi che emergono dai test)*
 
 Quando si chiude il batch: `docker build ./frontend` → tag nuovo → push → server swap `frontend` → `pull`+`up -d`+`restart nginx`.
 

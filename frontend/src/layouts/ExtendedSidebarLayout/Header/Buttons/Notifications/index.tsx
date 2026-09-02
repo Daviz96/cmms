@@ -65,6 +65,7 @@ import ReceiptTwoToneIcon from '@mui/icons-material/ReceiptTwoTone';
 import { SearchCriteria } from '../../../../../models/owns/page';
 import SockJS from 'sockjs-client';
 import { apiUrl } from 'src/config';
+import { refreshAccessToken } from 'src/utils/api';
 import useAuth from 'src/hooks/useAuth';
 import { Stomp } from '@stomp/stompjs';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -157,21 +158,33 @@ function HeaderNotifications() {
     };
     if (user) {
       if (!stompClient) {
-        const socket = new SockJS(`${apiUrl}ws`);
-        const client = Stomp.over(socket);
-        client.connect(
-          { token: localStorage.getItem('accessToken') },
-          function (frame) {
-            const subscription = client.subscribe(
-              `/user/${user.email}/notifications`,
-              function (message) {
-                const notification: Notification = JSON.parse(message.body);
-                dispatch(newReceivedNotification(notification));
-              }
-            );
-            setStompClient(client);
-          }
-        );
+        let refreshTried = false;
+        // If the CONNECT is rejected (commonly an expired access token), refresh the token once and
+        // reconnect with the fresh one — otherwise real-time notifications silently stop working.
+        const connect = () => {
+          const socket = new SockJS(`${apiUrl}ws`);
+          const client = Stomp.over(socket);
+          client.connect(
+            { token: localStorage.getItem('accessToken') },
+            function (frame) {
+              const subscription = client.subscribe(
+                `/user/${user.email}/notifications`,
+                function (message) {
+                  const notification: Notification = JSON.parse(message.body);
+                  dispatch(newReceivedNotification(notification));
+                }
+              );
+              setStompClient(client);
+            },
+            async function () {
+              if (refreshTried) return;
+              refreshTried = true;
+              const refreshed = await refreshAccessToken();
+              if (refreshed) connect();
+            }
+          );
+        };
+        connect();
       }
     } else {
       disconnect();
