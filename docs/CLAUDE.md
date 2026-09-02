@@ -31,30 +31,16 @@ DB originale preservato. Frontend live = immagine **upstream** `intelloop/atlas-
   `UserService.invalidateSessionsById(id)` (ricarica fresco per id, no-op se assente); `AuthController.logout` lo usa;
   rimosso il log temporaneo. `invalidateSessions(User)` invariato (serve ai caller che mutano l'entità).
 
-**Stato (aggiornato 2026-09-01, sera):** `v1.0.2`+`v1.0.3` (fix Bug 1/2/3) deployati sul live; rete Caddy
-**permanente**. **Sync upstream ADOTTATO in `self-hosted`** (ff-merge `7920c0d3`): integrati 32 commit upstream
-(rate-limiting login, PDF RTL/CJK, **flusso eliminazione account a 2 passi con conferma email** che sostituisce il
-pericoloso `DELETE /auth`, signed-URL caching, webhook, ecc.). Conflitti risolti (4: `MinioService` + 3
-`mailMessages*`). Nostri fix e config self-hosted **preservati e verificati**. **Validazione locale completa**:
-backend+frontend+test compilano; smoke-test full-stack su DB fresco → **Liquibase applica tutte le migration
-(incl. `fix_part_version_null` upstream, safe: backfill+NOT NULL), `SELF_HOSTED`, `Started ApiApplication`**.
-Immagini **`self-hosted-v1.1.0`** (backend+frontend) **DEPLOYATE sul live (2026-09-01 sera)**: backup DB fatto
-(`pg_dump`), migration upstream **`fix_part_version_null` applicata sui DATI REALI in 89ms**, `Started ApiApplication`
-in 25.5s, `SELF_HOSTED`. Solo i noti WARN Liquibase (changelog con spazio iniziale), nessun errore. Dati preservati
-(postgres/minio non ricreati). Branch `sync-upstream` pushato; `self-hosted` a `310e25a4`. Server compose:
-`/srv/docker/atlas/docker-compose.yml`, volumi named-con-bind su `/srv/data/databases/atlas/{postgres,minio}`
-(**mai `down -v`**). Runbook usato: `dev-docs/deploy-v1.1.0-runbook.md`. NB: SSH pilotato dall'assistente **non
-possibile** (chiave con passphrase, nessun agent, + password sudo) → deploy via runbook eseguito dall'utente.
-Smoke-test v1.1.0 **OK** (login, eliminazione 2-passi, invito, upload; **ricerca WO / Bug 3 CONFERMATO** via seed
-`dev-docs/seed_test_data.py`, `totalElements=6` senza NPE). **`v1.2.0` COSTRUITA e PUSHATA su GitHub (commit
-`5ea45b81`), NON ancora deployata:** (a) feature admin "Crea utente" con **link imposta-password**; (b) QR/dialog
-"scarica app" → **APK self-hosted** (non app ufficiale). Immagini `self-hosted-v1.2.0` (backend+frontend) taggate
-in locale. Deploy = stesso runbook (swap `api`+`frontend` → `:self-hosted-v1.2.0`, `pull`+`up -d`+`restart nginx`,
-backup DB). Poi decidere se aggiungere la restrizione "elimina solo admin"
-([docs/restrict-user-deletion-to-admins-plan.md](restrict-user-deletion-to-admins-plan.md)) sopra al nuovo flusso.
-**Dettaglio completo, file:line, gotcha operativi in
-[docs/live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md)** e piano
-[docs/upstream-sync-plan.md](upstream-sync-plan.md). (Runbook deploy: `dev-docs/upgrade-to-self-hosted.md`.)
+**Stato (aggiornato 2026-09-02):** tutte le versioni fino a **`v1.2.1` (backend)** + **`v1.2.0` (frontend)** sono
+**LIVE** su `cmms.firmabratex.pl`. Ultimo backend `v1.2.1`: fix mail "imposta password" (`accountCreatedSubject`
+risolto dal message source giusto `messages*`) + `createUserByAdmin` `@Transactional`. Porta host `3000` **chiusa**
+(solo Caddy → `atlas_nginx:80`; niente più accesso HTTP grezzo). **In coda (batch frontend, NON ancora buildato):**
+`timers`→"Timery" (i18n PL, commit `377fa3bd`). Branch `self-hosted` HEAD **`377fa3bd`**, pushato.
+**📊 Fonte di verità dello stato + changelog storico: [docs/PROJECT-STATUS.md](PROJECT-STATUS.md).**
+Dettagli: bug storici 1/2/3 → [live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md); sync upstream →
+[upstream-sync-plan.md](upstream-sync-plan.md). **Gotcha:** dati in **bind-mount** (mai `down -v`); dopo swap immagini
+→ **`restart nginx`**; SSH pilotato dall'assistente non possibile (chiave con passphrase + sudo) → deploy via runbook
+eseguito dall'utente (`dev-docs/deploy-v1.1.0-runbook.md`, riusabile bumpando la versione).
 
 **Backlog / piani (2026-09-01/02):**
 - ✅ **Scelta admin "Invita ⇄ Crea utente" — IMPLEMENTATA in `v1.2.0`** (commit `5ea45b81`): toggle nel dialog;
