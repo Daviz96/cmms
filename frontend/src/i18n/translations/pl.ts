@@ -827,7 +827,7 @@ const plJSON = {
   category_edit_failure: 'Nie udało się edytować kategorii',
   category_delete_success: 'Kategoria została pomyślnie usunięta',
   category_delete_failure: 'Nie udało się usunąć kategorii',
-  timers: 'Liczniki',
+  timers: 'Timery',
   costs: 'Koszty',
   add_category: 'Dodaj nową kategorię',
   add_category_description:
