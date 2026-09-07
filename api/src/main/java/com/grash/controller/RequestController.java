@@ -174,6 +174,10 @@ public class RequestController {
                           HttpServletRequest req) {
         User user = userService.whoami(req);
         if (user.getRole().getCreatePermissions().contains(PermissionEntity.REQUESTS)) {
+            // Asset scoping: a user may only attach an asset they are allowed to view (403 otherwise).
+            if (requestReq.getAsset() != null && requestReq.getAsset().getId() != null) {
+                assetService.checkAccessToAssetId(requestReq.getAsset().getId(), user);
+            }
             Request createdRequest = requestService.create(requestReq, user.getCompany());
             onRequestCreation(createdRequest, user.getCompany(), user.getFullName());
             return requestMapper.toShowDto(createdRequest);

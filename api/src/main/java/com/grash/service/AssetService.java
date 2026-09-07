@@ -1,5 +1,6 @@
 package com.grash.service;
 
+import com.grash.advancedsearch.FilterField;
 import com.grash.advancedsearch.SearchCriteria;
 import com.grash.advancedsearch.SpecificationBuilder;
 import com.grash.dto.AssetPatchDTO;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.transaction.Transactional;
 
 import java.util.*;
@@ -308,13 +310,66 @@ public class AssetService {
         return assets.map(asset -> assetMapper.toShowDto(asset, parentIdsWithChildren));
     }
 
+    /**
+     * A ROLE_CLIENT user whose role lacks the "view other assets" permission may only see the assets they
+     * are related to. Mirrors {@link com.grash.model.Asset#canBeViewedBy(User)}.
+     */
+    private boolean isRestrictedToAssignedAssets(User user) {
+        return user.getRole().getRoleType().equals(RoleType.ROLE_CLIENT)
+                && !user.getRole().getViewOtherPermissions().contains(PermissionEntity.ASSETS);
+    }
+
+    /**
+     * OR-filter keeping only the assets a restricted user may see: assets they created, or where they are the
+     * primary user, an assigned (secondary) user, or a member of an assigned team. Same shape as the Work
+     * Order scoping in {@code WorkOrderService.getSearchCriteria}.
+     */
+    private FilterField assignedAssetsFilter(User user) {
+        return FilterField.builder()
+                .field("createdBy")
+                .operation("eq")
+                .value(user.getId())
+                .values(new ArrayList<>())
+                .alternatives(Arrays.asList(
+                        FilterField.builder()
+                                .field("primaryUser")
+                                .operation("eq")
+                                .value(user.getId())
+                                .values(Collections.singletonList(user.getId())).build(),
+                        FilterField.builder()
+                                .field("assignedTo")
+                                .operation("inm")
+                                .joinType(JoinType.LEFT)
+                                .value("")
+                                .values(Collections.singletonList(user.getId())).build(),
+                        FilterField.builder()
+                                .field("teams")
+                                .operation("inm")
+                                .joinType(JoinType.LEFT)
+                                .value("")
+                                .values(teamService.findByUser(user.getId()).stream()
+                                        .map(Team::getId).collect(Collectors.toList())).build()
+                )).build();
+    }
+
+    /**
+     * Flat, assignment-filtered page of assets for a restricted user. Ignores the asset hierarchy on purpose:
+     * a user assigned to a child asset must see it even without access to its parent.
+     */
+    private Page<Asset> findAssignedAssets(User user, Pageable pageable) {
+        SpecificationBuilder<Asset> builder = new SpecificationBuilder<>();
+        builder.with(FilterField.builder().field("company").operation("eq")
+                .value(user.getCompany().getId()).values(new ArrayList<>()).build());
+        builder.with(assignedAssetsFilter(user));
+        return assetRepository.findAll(builder.build(), pageable);
+    }
+
     public SearchCriteria getSearchCriteria(User user, SearchCriteria searchCriteria) {
         if (user.getRole().getRoleType().equals(RoleType.ROLE_CLIENT)) {
             if (user.getRole().getViewPermissions().contains(PermissionEntity.ASSETS)) {
                 searchCriteria.filterCompany(user);
-                boolean canViewOthers = user.getRole().getViewOtherPermissions().contains(PermissionEntity.ASSETS);
-                if (!canViewOthers) {
-                    searchCriteria.filterCreatedBy(user);
+                if (isRestrictedToAssignedAssets(user)) {
+                    searchCriteria.getFilterFields().add(assignedAssetsFilter(user));
                 }
             } else throw new CustomException("Access Denied", HttpStatus.FORBIDDEN);
         }
@@ -361,6 +416,10 @@ public class AssetService {
     public List<Asset> findChildren(Long id, User user, Pageable pageable) {
         if (!user.getRole().getViewPermissions().contains(PermissionEntity.ASSETS))
             throw new CustomException("Access denied", HttpStatus.FORBIDDEN);
+        if (isRestrictedToAssignedAssets(user)) {
+            // No hierarchy for restricted users: return a flat list of only the assets assigned to them.
+            return findAssignedAssets(user, pageable).getContent();
+        }
         if (id.equals(0L) && user.getRole().getRoleType().equals(RoleType.ROLE_CLIENT)) {
             return findByCompanyAndParentAssetNull(user.getCompany().getId(), pageable);
         }
@@ -373,6 +432,10 @@ public class AssetService {
     public Page<Asset> findChildrenPaginated(Long id, User user, Pageable pageable) {
         if (!user.getRole().getViewPermissions().contains(PermissionEntity.ASSETS))
             throw new CustomException("Access denied", HttpStatus.FORBIDDEN);
+        if (isRestrictedToAssignedAssets(user)) {
+            // No hierarchy for restricted users: return a flat page of only the assets assigned to them.
+            return findAssignedAssets(user, pageable);
+        }
         if (id.equals(0L) && user.getRole().getRoleType().equals(RoleType.ROLE_CLIENT)) {
             return assetRepository.findByCompany_IdAndParentAssetIsNull(user.getCompany().getId(), pageable);
         }
@@ -451,6 +514,18 @@ public class AssetService {
     }
 
     public List<Asset> findMini(Long locationId, User user) {
+        if (isRestrictedToAssignedAssets(user)) {
+            // The asset picker (Work Order / Request forms) must only offer assets assigned to the user.
+            SpecificationBuilder<Asset> builder = new SpecificationBuilder<>();
+            builder.with(FilterField.builder().field("company").operation("eq")
+                    .value(user.getCompany().getId()).values(new ArrayList<>()).build());
+            if (locationId != null) {
+                builder.with(FilterField.builder().field("location").operation("eq")
+                        .value(locationId).values(new ArrayList<>()).build());
+            }
+            builder.with(assignedAssetsFilter(user));
+            return assetRepository.findAll(builder.build());
+        }
         if (locationId == null) {
             return findByCompany(user.getCompany().getId());
         }
