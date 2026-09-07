@@ -1,8 +1,9 @@
 # Atlas CMMS self-hosted — Stato del progetto & Changelog
 
 > **Documento master di stato.** Snapshot dello stato reale (produzione) + storico delle versioni.
-> Aggiornato: **2026-09-02**. Deployment live: `https://cmms.firmabratex.pl` (LAN-only dietro Caddy, TLS wildcard).
-> Fork: `Daviz96/cmms`, branch **`self-hosted`** (HEAD `377fa3bd`). Immagini: Docker Hub `dablio96/self-hosted-cmms-*`.
+> Aggiornato: **2026-09-07**. Deployment live: `https://cmms.firmabratex.pl` (LAN-only dietro Caddy, TLS wildcard).
+> Fork: `Daviz96/cmms`, branch **`self-hosted`** (allineato con `origin`). Immagini: Docker Hub `dablio96/self-hosted-cmms-*`.
+> Fotografia puntuale del giorno: [project-snapshot-2026-09-07.md](project-snapshot-2026-09-07.md).
 
 ---
 
@@ -11,7 +12,7 @@
 | Componente | Immagine / versione | Stato |
 |---|---|---|
 | **Backend** (`atlas-cmms-backend`) | `dablio96/self-hosted-cmms-backend:self-hosted-v1.2.1` | ✅ live |
-| **Frontend** (`atlas-cmms-frontend`) | `dablio96/self-hosted-cmms-frontend:self-hosted-v1.2.0` | ✅ live (fix `timers` in coda, non ancora buildato) |
+| **Frontend** (`atlas-cmms-frontend`) | `dablio96/self-hosted-cmms-frontend:self-hosted-v1.2.2` | ✅ live (i18n `timers`→"Timery" + fix WebSocket) |
 | **DB** (`atlas_db`) | `postgres:16-alpine` | ✅ dati preservati |
 | **Storage** (`atlas_minio`) | `minio/...2025-04-22` | ✅ |
 | **Ingress interno** (`atlas_nginx`) | `nginx:1.27-alpine` | ✅ solo `80/tcp` interno (nessuna porta host) |
@@ -41,32 +42,32 @@ Ordine cronologico. "Deploy" = attivo in produzione.
 | **v1.1.0** | **Sync upstream** (32 commit `Grashjs/cmms`): rate-limiting login, PDF RTL/CJK, **flusso eliminazione account a 2 passi (conferma email)**, signed-URL caching, webhook, migrazione `Part.version`, ecc. Conflitti risolti (4). | `69a259f4`+`7920c0d3` | ✅ |
 | **v1.2.0** | **Feature admin "Crea utente"** (toggle Invita⇄Crea) con **link imposta-password** (nessuna password in mail) + **fix QR/dialog "scarica app" → APK self-hosted** (non app ufficiale) | `5ea45b81`,`889ee9e0`,`f3169fef` | ✅ |
 | **v1.2.1** | **Fix mail**: `accountCreatedSubject` risolto dal message source giusto (`messages*`, non `mailMessages*`) → basta errore `No message found for pl_PL`; `createUserByAdmin` `@Transactional` (niente utenti orfani) | `3953835e` | ✅ (solo backend) |
-| **(in coda)** | **i18n PL**: `timers` era "Liczniki" (uguale a meters) → **"Timery"**. Committato, **NON** ancora buildato/deployato (batch frontend) | `377fa3bd` | ⏳ |
+| **v1.2.2** | **Batch frontend**: i18n PL `timers` "Liczniki"→**"Timery"** (era uguale a meters); **fix WebSocket** import/export/notifiche (su CONNECT con token scaduto → refresh token + reconnect, prima falliva in silenzio "WebSocket connection not initialized") | `377fa3bd`,`973daaa3` | ✅ (2026-09-07, solo frontend) |
 
-**Immagini Docker Hub:** backend `v1.0.0..v1.2.1`; frontend `v1.0.2`, `v1.1.0`, `v1.2.0` (il frontend è cambiato solo
-in quei punti). Tag git: solo `self-hosted-v1.0.0` (le altre versioni = commit + tag immagine; si possono aggiungere tag git).
+**Immagini Docker Hub:** backend `v1.0.0..v1.2.1`; frontend `v1.0.2`, `v1.1.0`, `v1.2.0`, `v1.2.2` (il frontend è
+cambiato solo in quei punti; `v1.2.1` fu solo backend). Tag git: solo `self-hosted-v1.0.0` (le altre versioni = commit +
+tag immagine; si possono aggiungere tag git).
 
 ---
 
 ## 3. In coda / batch (da NON buildare finché non si accumulano più fix)
 
-**Frontend — prossima rebuild `v1.2.x`:**
-- `timers` → "Timery" (traduzione PL) — commit `377fa3bd`.
-- **WS import/export/notifiche: refresh token + reconnect** — la WS (SockJS/STOMP) falliva in silenzio con token
-  **scaduto** (CONNECT rifiutato → "WebSocket connection not initialized"; import/export KO, notifiche non-live).
-  Ora su errore di CONNECT rinfresca il token (`refreshAccessToken()`) e riconnette. File: `hooks/useImport.ts`,
-  `hooks/useExport.ts`, `layouts/.../Notifications/index.tsx`.
+**Frontend — prossima rebuild `v1.2.x`:** *(batch vuoto — il precedente `timers`+WS è stato rilasciato in `v1.2.2` il
+2026-09-07)*.
 - *(aggiungere qui i prossimi ritocchi che emergono dai test)*
 
-Quando si chiude il batch: `docker build ./frontend` → tag nuovo → push → server swap `frontend` → `pull`+`up -d`+`restart nginx`.
+Quando si chiude il batch: `docker build -t dablio96/self-hosted-cmms-frontend:self-hosted-vX.Y.Z ./frontend` → push →
+server swap `frontend` → `pull`+`up -d`+`restart nginx`.
 
 ---
 
 ## 4. Decisioni aperte / backlog (piani pronti, non implementati)
 
-- **Eliminazione utenti solo agli admin** — parzialmente coperto dal flusso upstream a 2 passi (conferma email) che ha
-  **rimosso** l'hard-delete istantaneo. Da decidere se limitare del tutto l'auto-eliminazione ai soli admin.
-  Piano: [restrict-user-deletion-to-admins-plan.md](restrict-user-deletion-to-admins-plan.md).
+- **Eliminazione utenti solo agli admin** — ⚠️ **premessa del piano superata** (verifica 2026-09-07): il pericoloso
+  `DELETE /auth` `permitAll` hard-delete **non esiste più** (sostituito dal flusso upstream a 2 passi
+  `deleteAccountRequest`/`deleteAccountConfirm`; unico `@DeleteMapping` = `/{username}` gated `ROLE_SUPER_ADMIN`).
+  Resta aperto solo il ramo di **auto-soft-delete** in `UserService.softDeleteUser` (`:655`, reversibile). Da decidere se
+  blindarlo e riscrivere il piano sulla situazione attuale. Piano: [restrict-user-deletion-to-admins-plan.md](restrict-user-deletion-to-admins-plan.md).
 - **Traduzione completa** del dialog "scarica app" (`MobileAppDownloadDialog`) — al momento in inglese sul sito PL.
 - **Tag git** per le versioni `v1.0.1..v1.2.1` (oggi solo `v1.0.0`), per storico più pulito.
 

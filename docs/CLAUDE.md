@@ -14,16 +14,18 @@ tests and persistent documentation.
 **Current focus:** **PRODUZIONE STABILE — manutenzione e fix incrementali** (post sync upstream). Deployment
 self-hosted **live** su `https://cmms.firmabratex.pl` (LAN-only, dietro **Caddy** TLS wildcard; `SELF_HOSTED`;
 DB originale preservato). Fork `Daviz96/cmms`, branch **`self-hosted`**. I **bug storici 1/2/3** e il **sync upstream**
-sono **risolti e live**. Ora: piccoli fix di UI/i18n accumulati in un **batch frontend** (vedi sotto), da buildare
-quando pieno. **📊 Stato reale + changelog storico completo: [docs/PROJECT-STATUS.md](PROJECT-STATUS.md)**
+sono **risolti e live**. Ultimo rilascio: **frontend `v1.2.2`** (i18n `timers` + fix WebSocket) deployato il 2026-09-07;
+prossimo batch frontend attualmente vuoto. **📊 Stato reale + changelog storico completo: [docs/PROJECT-STATUS.md](PROJECT-STATUS.md)**
 (fonte di verità). Dettaglio bug storici → [live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md);
 sync upstream → [upstream-sync-plan.md](upstream-sync-plan.md).
 
-**Stato (aggiornato 2026-09-02):** tutte le versioni fino a **`v1.2.1` (backend)** + **`v1.2.0` (frontend)** sono
-**LIVE** su `cmms.firmabratex.pl`. Ultimo backend `v1.2.1`: fix mail "imposta password" (`accountCreatedSubject`
-risolto dal message source giusto `messages*`) + `createUserByAdmin` `@Transactional`. Porta host `3000` **chiusa**
-(solo Caddy → `atlas_nginx:80`; niente più accesso HTTP grezzo). **In coda (batch frontend, NON ancora buildato):**
-`timers`→"Timery" (i18n PL, commit `377fa3bd`). Branch `self-hosted` HEAD **`377fa3bd`**, pushato.
+**Stato (aggiornato 2026-09-07):** tutte le versioni fino a **`v1.2.1` (backend)** + **`v1.2.2` (frontend)** sono
+**LIVE** su `cmms.firmabratex.pl`. Backend `v1.2.1`: fix mail "imposta password" (`accountCreatedSubject`
+risolto dal message source giusto `messages*`) + `createUserByAdmin` `@Transactional`. **Frontend `v1.2.2`
+(2026-09-07):** i18n PL `timers`→"Timery" (commit `377fa3bd`) + **fix WebSocket** import/export/notifiche (refresh
+token + reconnect su CONNECT scaduto, commit `973daaa3`) — batch frontend **buildato e deployato** (non più "in coda").
+Porta host `3000` **chiusa** (solo Caddy → `atlas_nginx:80`; niente più accesso HTTP grezzo). Branch `self-hosted`
+allineato con `origin`. **Snapshot puntuale 2026-09-07:** [docs/project-snapshot-2026-09-07.md](project-snapshot-2026-09-07.md).
 **📊 Fonte di verità dello stato + changelog storico: [docs/PROJECT-STATUS.md](PROJECT-STATUS.md).**
 Dettagli: bug storici 1/2/3 → [live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md); sync upstream →
 [upstream-sync-plan.md](upstream-sync-plan.md). **Gotcha:** dati in **bind-mount** (mai `down -v`); dopo swap immagini
@@ -37,18 +39,15 @@ eseguito dall'utente (`dev-docs/deploy-v1.1.0-runbook.md`, riusabile bumpando la
   rispetto al piano originale). `POST /users/create-by-admin` + `POST /auth/set-password`
   (`VerificationTokenService.confirmSetPassword`), template `account-created.html`, pagina `/account/set-password`,
   DTO `CreateUserByAdminDTO`/`SetPasswordRequest`. Piano: [docs/admin-invite-vs-create-user-plan.md](admin-invite-vs-create-user-plan.md).
-- **Eliminazione utenti solo agli admin** (blocco auto-eliminazione). ⚠️ Scoperto che l'auto-eliminazione usa
-  **`DELETE /auth`** (`AuthController.deleteAccount`, `@PreAuthorize permitAll`) = **HARD delete**; se l'utente
-  possiede la company → `companyService.delete()` **cancella l'intera org**. Fix proposta: rimuovere `DELETE /auth`
-  + togliere il ramo self in `softDeleteUser`. Invasività bassa. Piano:
-  [docs/restrict-user-deletion-to-admins-plan.md](restrict-user-deletion-to-admins-plan.md).
-  **NB:** upstream ha già rifatto l'eliminazione account (flusso request+conferma, commit `d7e7ec00`/`714a99dc`) →
-  coordinare con il sync (sotto) prima di implementare questo piano.
-- **Sync col fork upstream** (`Grashjs/cmms`). Remote `upstream` configurato + fetchato. Divergenza dal fork
-  `e1d24406`: upstream **+32 commit**, noi **+4**. Dry-run merge fatto: **solo 4 conflitti testuali (1 hunk)** —
-  `MinioService.java` + 3 `mailMessages*`; **129 file auto-mergiati** (rileggere i sensibili: `AuthController`,
-  `UserService`, `WorkOrderService`, `GCPService`, `application.yml`). Attenzione a migrazione DB `Part.version`
-  (`bdd94408`). Piano completo: [docs/upstream-sync-plan.md](upstream-sync-plan.md). Da eseguire in sessione dedicata.
+- **Eliminazione utenti solo agli admin** (blocco auto-eliminazione). ⚠️ **Premessa del piano superata** (verifica
+  2026-09-07): il pericoloso `DELETE /auth` `permitAll` hard-delete **non esiste più** — il sync upstream l'ha
+  sostituito col flusso a 2 passi `deleteAccountRequest`/`deleteAccountConfirm`; l'unico `@DeleteMapping` in
+  `AuthController` è `/{username}` gated `ROLE_SUPER_ADMIN`. Resta aperto solo il ramo di **auto-soft-delete** in
+  `UserService.softDeleteUser` (`:655`, disabilita+rinomina, reversibile). Da decidere se blindarlo e **riscrivere il
+  piano** sulla situazione attuale. Piano: [docs/restrict-user-deletion-to-admins-plan.md](restrict-user-deletion-to-admins-plan.md).
+- ✅ **Sync col fork upstream** (`Grashjs/cmms`, +32 commit) — **FATTO in `v1.1.0`**: rate-limiting login, PDF RTL/CJK,
+  flusso eliminazione account a 2 passi, signed-URL caching, webhook, migrazione DB `Part.version`. 4 conflitti risolti
+  (`MinioService.java` + 3 `mailMessages*`), 129 file auto-mergiati. Procedura: [docs/upstream-sync-plan.md](upstream-sync-plan.md).
 
 Preceding — MOD-020 (Release Commit, Tag & Push) — **completed, doc 40, RELEASE VERSIONED**
 (no code change). La baseline self-hosted è stata **versionata**: ramo **`self-hosted`**, commit
