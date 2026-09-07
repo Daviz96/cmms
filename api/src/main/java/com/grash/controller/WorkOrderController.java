@@ -120,6 +120,10 @@ public class WorkOrderController {
     WorkOrderShowDTO create(@Parameter(description = "Work order data to create") @Valid @RequestBody WorkOrderPostDTO
                                     workOrderReq, HttpServletRequest req) {
         User user = userService.whoami(req);
+        // Asset scoping: a user may only attach an asset they are allowed to view (403 otherwise).
+        if (workOrderReq.getAsset() != null && workOrderReq.getAsset().getId() != null) {
+            assetService.checkAccessToAssetId(workOrderReq.getAsset().getId(), user);
+        }
         WorkOrder createdWorkOrder = workOrderService.createByUser(workOrderReq, user);
         return workOrderMapper.toShowDto(createdWorkOrder);
 

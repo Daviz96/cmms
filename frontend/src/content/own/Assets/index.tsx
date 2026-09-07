@@ -131,7 +131,12 @@ function Assets() {
   const openMenu = Boolean(anchorEl);
   type ViewType = 'hierarchy' | 'list';
   const theme = useTheme();
-  const [view, setView] = useState<ViewType>('hierarchy');
+  // Users who can't view other users' assets only get a flat, assignment-filtered list (the backend scopes
+  // both /assets/search and the hierarchy endpoint to their assigned assets); the tree view is hidden for them.
+  const canViewOtherAssets = hasViewOtherPermission(PermissionEntity.ASSETS);
+  const [view, setView] = useState<ViewType>(
+    canViewOtherAssets ? 'hierarchy' : 'list'
+  );
   const [hierarchySorting, setHierarchySorting] = useState<SortingState>([]);
   const [pageable, setPageable] = useState<Pageable>({
     page: 0,
@@ -151,7 +156,9 @@ function Assets() {
   };
   const [criteria, setCriteria] = useState<SearchCriteria>(initialCriteria);
   const onQueryChange = (event) => {
-    setView(event.target.value ? 'list' : 'hierarchy');
+    setView(
+      event.target.value ? 'list' : canViewOtherAssets ? 'hierarchy' : 'list'
+    );
     onSearchQueryChange<AssetDTO>(event, criteria, setCriteria, [
       'name',
       'description',
@@ -365,7 +372,7 @@ function Assets() {
 
   const onResetFilters = () => {
     setCriteria(initialCriteria);
-    setView('hierarchy');
+    setView(canViewOtherAssets ? 'hierarchy' : 'list');
   };
 
   const columnHelper = createColumnHelper<AssetDTO>();
