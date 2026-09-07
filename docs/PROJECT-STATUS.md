@@ -74,6 +74,9 @@ server swap `frontend` → `pull`+`up -d`+`restart nginx`.
 - **Tag git** per le versioni `v1.0.1..v1.3.0` (oggi solo `v1.0.0`), per storico più pulito.
 - **Asset scoping — fase 2** (follow-up di v1.3.0): validare l'asset anche nei **patch** WO/richiesta che lo cambiano;
   valutare lo scoping di PM/meter/parti collegati ad asset fuori scope. Vedi [feature-proposals/asset-visibility-scoping.md](feature-proposals/asset-visibility-scoping.md) §10.
+- **File untracked da decidere** (lasciati così per ora, 2026-09-07): `docker-compose.prod.yml` (bozza stale, pinna
+  `v1.0.1`, non è ciò che gira sul server) e `images/download-apk.png` (848 B, non referenziata nel frontend). Da
+  aggiornare/gitignorare oppure cancellare in futuro.
 
 ---
 
