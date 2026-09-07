@@ -11,8 +11,8 @@
 
 | Componente | Immagine / versione | Stato |
 |---|---|---|
-| **Backend** (`atlas-cmms-backend`) | `dablio96/self-hosted-cmms-backend:self-hosted-v1.2.1` | ✅ live |
-| **Frontend** (`atlas-cmms-frontend`) | `dablio96/self-hosted-cmms-frontend:self-hosted-v1.2.2` | ✅ live (i18n `timers`→"Timery" + fix WebSocket) |
+| **Backend** (`atlas-cmms-backend`) | `dablio96/self-hosted-cmms-backend:self-hosted-v1.3.0` | ✅ live (asset visibility scoping) |
+| **Frontend** (`atlas-cmms-frontend`) | `dablio96/self-hosted-cmms-frontend:self-hosted-v1.3.0` | ✅ live (asset list flat per ruoli ristretti) |
 | **DB** (`atlas_db`) | `postgres:16-alpine` | ✅ dati preservati |
 | **Storage** (`atlas_minio`) | `minio/...2025-04-22` | ✅ |
 | **Ingress interno** (`atlas_nginx`) | `nginx:1.27-alpine` | ✅ solo `80/tcp` interno (nessuna porta host) |
@@ -43,10 +43,12 @@ Ordine cronologico. "Deploy" = attivo in produzione.
 | **v1.2.0** | **Feature admin "Crea utente"** (toggle Invita⇄Crea) con **link imposta-password** (nessuna password in mail) + **fix QR/dialog "scarica app" → APK self-hosted** (non app ufficiale) | `5ea45b81`,`889ee9e0`,`f3169fef` | ✅ |
 | **v1.2.1** | **Fix mail**: `accountCreatedSubject` risolto dal message source giusto (`messages*`, non `mailMessages*`) → basta errore `No message found for pl_PL`; `createUserByAdmin` `@Transactional` (niente utenti orfani) | `3953835e` | ✅ (solo backend) |
 | **v1.2.2** | **Batch frontend**: i18n PL `timers` "Liczniki"→**"Timery"** (era uguale a meters); **fix WebSocket** import/export/notifiche (su CONNECT con token scaduto → refresh token + reconnect, prima falliva in silenzio "WebSocket connection not initialized") | `377fa3bd`,`973daaa3` | ✅ (2026-09-07, solo frontend) |
+| **v1.3.0** | **Feature: visibilità asset per assegnazione.** Un ruolo con `view ASSETS` ma **senza `viewOther ASSETS`** vede/usa **solo** gli asset a lui assegnati (creatore, primaryUser, assignedTo, team) in **lista/albero** (lista piatta) e **picker** WO/richiesta; create WO/richiesta valida `canBeViewedBy` (403). Backend + frontend. Sviluppata su branch `feature/asset-visibility-scoping`, testata sul LAN, mergiata. | `64f91a6d`,`6ddca8f7` | ✅ (2026-09-07) |
 
-**Immagini Docker Hub:** backend `v1.0.0..v1.2.1`; frontend `v1.0.2`, `v1.1.0`, `v1.2.0`, `v1.2.2` (il frontend è
-cambiato solo in quei punti; `v1.2.1` fu solo backend). Tag git: solo `self-hosted-v1.0.0` (le altre versioni = commit +
-tag immagine; si possono aggiungere tag git).
+**Immagini Docker Hub:** backend `v1.0.0..v1.2.1`, `v1.3.0`; frontend `v1.0.2`, `v1.1.0`, `v1.2.0`, `v1.2.2`, `v1.3.0`
+(il frontend è cambiato solo in quei punti; `v1.2.1` fu solo backend). **`latest`** (backend+frontend) **corretto**
+(2026-09-07) → punta a **`v1.3.0`** (prima era disallineato a una versione vecchia). RC di lavoro: `v1.3.0-rc1`
+(= digest di `v1.3.0`). Tag git: solo `self-hosted-v1.0.0` (le altre = commit + tag immagine).
 
 ---
 
@@ -69,16 +71,19 @@ server swap `frontend` → `pull`+`up -d`+`restart nginx`.
   Resta aperto solo il ramo di **auto-soft-delete** in `UserService.softDeleteUser` (`:655`, reversibile). Da decidere se
   blindarlo e riscrivere il piano sulla situazione attuale. Piano: [restrict-user-deletion-to-admins-plan.md](restrict-user-deletion-to-admins-plan.md).
 - **Traduzione completa** del dialog "scarica app" (`MobileAppDownloadDialog`) — al momento in inglese sul sito PL.
-- **Tag git** per le versioni `v1.0.1..v1.2.1` (oggi solo `v1.0.0`), per storico più pulito.
+- **Tag git** per le versioni `v1.0.1..v1.3.0` (oggi solo `v1.0.0`), per storico più pulito.
+- **Asset scoping — fase 2** (follow-up di v1.3.0): validare l'asset anche nei **patch** WO/richiesta che lo cambiano;
+  valutare lo scoping di PM/meter/parti collegati ad asset fuori scope. Vedi [feature-proposals/asset-visibility-scoping.md](feature-proposals/asset-visibility-scoping.md) §10.
 
 ---
 
-## 5. Test funzionali eseguiti (v1.1.0 / v1.2.x)
+## 5. Test funzionali eseguiti (v1.1.0 / v1.2.x / v1.3.0)
 - ✅ Login, upload/download allegati (storage MinIO).
 - ✅ **Ricerca Work Order** (Bug 3) — validata con seed (`dev-docs/seed_test_data.py`), `totalElements=6`, nessun NPE.
 - ✅ **Eliminazione account** — nuovo flusso a 2 passi con conferma email.
 - ✅ **Invito** utente via email.
 - ✅ **Crea utente** (v1.2.1) — nessun errore/conflitto. **Da confermare end-to-end:** arrivo mail imposta-password + link `/account/set-password`.
+- ✅ **Visibilità asset per assegnazione** (v1.3.0) — testata sul LAN con ruolo ristretto (`view ASSETS`, no `viewOther`): lista mostra solo asset assegnati (via team/primaryUser/assignedTo), dettagli/picker coerenti. **Confermata dall'owner.**
 
 ---
 

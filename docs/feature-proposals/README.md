@@ -12,7 +12,7 @@
 
 | Documento | Tema | Stato |
 |---|---|---|
-| [asset-visibility-scoping.md](asset-visibility-scoping.md) | Visibilità asset per utente (un utente vede/crea WO e richieste solo sugli asset assegnati) | PROPOSTA |
+| [asset-visibility-scoping.md](asset-visibility-scoping.md) | Visibilità asset per utente (un utente vede/crea WO e richieste solo sugli asset assegnati) | ✅ FATTO (v1.3.0) |
 
 ## Convenzioni
 - **Nome file:** `kebab-case`, descrittivo (`asset-visibility-scoping.md`).

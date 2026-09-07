@@ -14,13 +14,15 @@ tests and persistent documentation.
 **Current focus:** **PRODUZIONE STABILE — manutenzione e fix incrementali** (post sync upstream). Deployment
 self-hosted **live** su `https://cmms.firmabratex.pl` (LAN-only, dietro **Caddy** TLS wildcard; `SELF_HOSTED`;
 DB originale preservato). Fork `Daviz96/cmms`, branch **`self-hosted`**. I **bug storici 1/2/3** e il **sync upstream**
-sono **risolti e live**. Ultimo rilascio: **frontend `v1.2.2`** (i18n `timers` + fix WebSocket) deployato il 2026-09-07;
-prossimo batch frontend attualmente vuoto. **📊 Stato reale + changelog storico completo: [docs/PROJECT-STATUS.md](PROJECT-STATUS.md)**
+sono **risolti e live**. Ultimo rilascio: **`v1.3.0`** (backend+frontend, 2026-09-07) — **visibilità asset per
+assegnazione** (ruoli senza `viewOther ASSETS` vedono/usano solo gli asset assegnati). `latest` su Docker Hub corretto →
+`v1.3.0`. **📊 Stato reale + changelog storico completo: [docs/PROJECT-STATUS.md](PROJECT-STATUS.md)**
 (fonte di verità). Dettaglio bug storici → [live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md);
 sync upstream → [upstream-sync-plan.md](upstream-sync-plan.md).
 
-**Stato (aggiornato 2026-09-07):** tutte le versioni fino a **`v1.2.1` (backend)** + **`v1.2.2` (frontend)** sono
-**LIVE** su `cmms.firmabratex.pl`. Backend `v1.2.1`: fix mail "imposta password" (`accountCreatedSubject`
+**Stato (aggiornato 2026-09-07):** tutte le versioni fino a **`v1.3.0` (backend+frontend)** sono
+**LIVE** su `cmms.firmabratex.pl`. **`v1.3.0`**: visibilità asset per assegnazione (branch
+`feature/asset-visibility-scoping` testato sul LAN e mergiato, merge `6ddca8f7`); `latest` Docker Hub → `v1.3.0`. Backend `v1.2.1`: fix mail "imposta password" (`accountCreatedSubject`
 risolto dal message source giusto `messages*`) + `createUserByAdmin` `@Transactional`. **Frontend `v1.2.2`
 (2026-09-07):** i18n PL `timers`→"Timery" (commit `377fa3bd`) + **fix WebSocket** import/export/notifiche (refresh
 token + reconnect su CONNECT scaduto, commit `973daaa3`) — batch frontend **buildato e deployato** (non più "in coda").

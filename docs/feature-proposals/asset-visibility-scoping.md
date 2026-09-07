@@ -1,9 +1,9 @@
 # Proposta — Visibilità asset per utente (*asset scoping*)
 
-> **Stato: IN CORSO — implementato (Opzione A) sul branch `feature/asset-visibility-scoping`, 2026-09-07. Da testare;
-> non ancora mergiato in `self-hosted`.** Feature backend + frontend. Invasività: **BASSA** (nessuna migrazione DB,
-> nessun cambio schema — riusa colonne e associazioni già esistenti). Ancorato al codice reale. Riepilogo di ciò che è
-> stato implementato in **§10**.
+> **Stato: ✅ FATTO — rilasciato in `v1.3.0` (2026-09-07).** Implementata l'Opzione A, testata sul LAN (confermata
+> dall'owner) e **mergiata in `self-hosted`** (merge `6ddca8f7`). Immagini `backend`/`frontend` `self-hosted-v1.3.0`
+> live; `latest` aggiornato. Invasività: **BASSA** (nessuna migrazione DB, nessun cambio schema). Riepilogo
+> implementazione in **§10**; follow-up di fase 2 (patch WO/richiesta, PM/meter/parti) restano aperti.
 
 ## 1. Obiettivo / caso d'uso
 
