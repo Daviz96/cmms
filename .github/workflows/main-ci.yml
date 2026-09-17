@@ -10,6 +10,9 @@ on:
 permissions:
   contents: write   # needed to push the deployed-backend / deployed-frontend tags
 
+env:
+  GIT_SHA: ${{ github.sha }}
+
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
@@ -105,9 +108,86 @@ jobs:
         run: mvn test -DargLine="--add-opens java.base/java.lang=ALL-UNNAMED"
         working-directory: ./api
 
+  selfhost-smoke-test:
+    needs: detect-changes
+    timeout-minutes: 35
+    if: >-
+      ${{
+        vars.SKIP_TESTS != 'true' &&
+        (needs.detect-changes.outputs.backend == 'true' ||
+         needs.detect-changes.outputs.frontend == 'true')
+      }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: selfhost-smoke-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build backend image from source
+        run: docker build -t intelloop/atlas-cmms-backend:latest ./api
+
+      - name: Build frontend image from source
+        run: docker build -t intelloop/atlas-cmms-frontend:latest ./frontend
+
+      - name: Prepare self-host directory with bare .env
+        run: |
+          mkdir -p /tmp/selfhost/logo /tmp/selfhost/config
+          cp .env.example /tmp/selfhost/.env
+          cp docker-compose.yml /tmp/selfhost/docker-compose.yml
+          cp nginx.conf /tmp/selfhost/nginx.conf
+
+      - name: Start self-host stack
+        run: docker compose up -d --wait
+        working-directory: /tmp/selfhost
+
+      - name: Wait for backend health-check via nginx
+        run: |
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health-check || true)
+            if [ "$code" = "200" ]; then
+              echo "backend health-check OK (attempt $i)"
+              exit 0
+            fi
+            echo "waiting for backend... attempt $i (http $code)"
+            sleep 10
+          done
+          echo "Backend health-check did not succeed in time" >&2
+          exit 1
+
+      - name: Check /health-check on api container
+        run: |
+          NET=$(docker network ls --filter "name=atlas-cmms" --format "{{.Name}}" | head -n1)
+          docker run --rm --network "$NET" curlimages/curl:8.8.0 -fsS http://api:8080/health-check
+          echo "backend /health-check OK"
+
+      - name: Check frontend is served
+        run: |
+          body=$(curl -fsS http://localhost:3000/)
+          echo "$body" | grep -q 'Atlas CMMS'
+          echo "$body" | grep -q '<div id="root">'
+          echo "frontend OK"
+
+      - name: Show stack status on failure
+        if: failure()
+        run: |
+          docker compose ps || true
+          docker compose logs || true
+        working-directory: /tmp/selfhost
+
+      - name: Clean up stack
+        if: always()
+        run: docker compose down -v
+        working-directory: /tmp/selfhost
+
   push-backend-docker:
     needs: [detect-changes, test]
-    if: ${{ !failure() && !cancelled() && needs.detect-changes.outputs.backend == 'true' }}
+    if: >-
+      ${{
+        needs.detect-changes.outputs.backend == 'true' &&
+        (needs.test.result == 'success' || needs.test.result == 'skipped')
+      }}
     runs-on: ubuntu-latest
     concurrency:
       group: backend-docker-${{ github.ref }}
@@ -142,6 +222,8 @@ jobs:
           context: ./api
           push: true
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            SENTRY_RELEASE=${{ env.GIT_SHA }}
           tags: |
             ${{ env.BACKEND_IMAGE }}:${{ steps.docker-tag.outputs.TAG }}
           cache-from: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache
@@ -149,7 +231,11 @@ jobs:
 
   deploy-koyeb:
     needs: [detect-changes, test]
-    if: ${{ !failure() && !cancelled() && needs.detect-changes.outputs.backend == 'true' }}
+    if: >-
+      ${{
+        needs.detect-changes.outputs.backend == 'true' &&
+        (needs.test.result == 'success' || needs.test.result == 'skipped')
+      }}
     runs-on: ubuntu-latest
     concurrency:
       group: backend-koyeb-${{ github.ref }}
@@ -169,7 +255,7 @@ jobs:
           app-name: soviet-jennette
           service-name: atlas-api
           service-instance-type: medium
-          service-env: "PORT=8080"
+          service-env: "PORT=8080,SENTRY_RELEASE=${{ env.GIT_SHA }}"
           service-ports: "8080:http"
           service-routes: "/:8080"
           service-checks: "8080:http:/health-check"
@@ -185,8 +271,14 @@ jobs:
           git push origin deployed-backend --force
 
   push-frontend-docker:
-    needs: [detect-changes, test]
-    if: ${{ !failure() && !cancelled() && needs.detect-changes.outputs.frontend == 'true' }}
+    needs: [ detect-changes, test ]
+    if: >-
+        ${{
+          always() &&
+          needs.detect-changes.result == 'success' &&
+          needs.detect-changes.outputs.frontend == 'true' &&
+          (needs.test.result == 'success' || needs.test.result == 'skipped')
+        }}
     runs-on: ubuntu-latest
     concurrency:
       group: frontend-docker-${{ github.ref }}
@@ -227,8 +319,14 @@ jobs:
           cache-to: type=registry,ref=${{ env.FRONTEND_IMAGE }}:buildcache,mode=max
 
   deploy-netlify:
-    needs: [detect-changes, test]
-    if: ${{ !failure() && !cancelled() && needs.detect-changes.outputs.frontend == 'true' }}
+    needs: [ detect-changes, test ]
+    if: >-
+      ${{
+        always() &&
+        needs.detect-changes.result == 'success' &&
+        needs.detect-changes.outputs.frontend == 'true' &&
+        (needs.test.result == 'success' || needs.test.result == 'skipped')
+      }}
     runs-on: ubuntu-latest
     concurrency:
       group: frontend-netlify-${{ github.ref }}
@@ -265,6 +363,11 @@ jobs:
           REACT_APP_PADDLE_ENVIRONMENT: ${{ secrets.REACT_APP_PADDLE_ENVIRONMENT }}
           REACT_APP_PADDLE_SECRET_TOKEN: ${{ secrets.REACT_APP_PADDLE_SECRET_TOKEN }}
           REACT_APP_RECAPTCHA_SITE_KEY: ${{ secrets.REACT_APP_RECAPTCHA_SITE_KEY }}
+          REACT_APP_SENTRY_DSN: ${{ secrets.REACT_APP_SENTRY_DSN }}
+          REACT_APP_SENTRY_ENVIRONMENT: ${{ vars.SENTRY_ENVIRONMENT }}
+          REACT_APP_SENTRY_RELEASE: ${{ env.GIT_SHA }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES: ${{ secrets.SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES }}
 
       - name: Deploy to Netlify
@@ -276,6 +379,7 @@ jobs:
           enable-pull-request-comment: true
           enable-commit-comment: true
           overwrites-pull-request-comment: true
+          production-deploy: true
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

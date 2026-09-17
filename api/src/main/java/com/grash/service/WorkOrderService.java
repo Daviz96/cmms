@@ -56,7 +56,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -873,7 +873,7 @@ public class WorkOrderService {
                         scheduleService.scheduleNextWorkOrderJobAfterCompletion(mutableWO.getParentPreventiveMaintenance().getSchedule().getId(), mutableWO.getCompletedOn());
                 }
                 Collection<Labor> labors = laborService.findByWorkOrder(id);
-                Collection<Labor> primaryTimes = labors.stream().filter(Labor::isLogged).collect(Collectors.toList());
+                Collection<Labor> primaryTimes = labors.stream().filter(Labor::isLogged).toList();
                 primaryTimes.forEach(laborService::stop);
             }
             WorkOrder patchedWorkOrder = saveAndFlushWithWebhook(mutableWO, user.getCompany(),
@@ -1183,6 +1183,21 @@ public class WorkOrderService {
         );
     }
 
+    private Specification<WorkOrder> buildDateRangeSpec(Date start, Date end) {
+        return (root, query, cb) -> {
+            Predicate estimatedStartInRange = cb.and(
+                    cb.greaterThanOrEqualTo(root.get("estimatedStartDate"), start),
+                    cb.lessThanOrEqualTo(root.get("estimatedStartDate"), end)
+            );
+            Predicate dueDateInRange = cb.and(
+                    cb.isNull(root.get("estimatedStartDate")),
+                    cb.greaterThanOrEqualTo(root.get("dueDate"), start),
+                    cb.lessThanOrEqualTo(root.get("dueDate"), end)
+            );
+            return cb.or(estimatedStartInRange, dueDateInRange);
+        };
+    }
+
     public Collection<CalendarEvent<WorkOrderBaseMiniDTO>> getEvents(@Valid DateRange dateRange, Long companyId,
                                                                      User user) {
         if (user.getRole().getViewPermissions().contains(PermissionEntity.WORK_ORDERS)) {
@@ -1201,17 +1216,67 @@ public class WorkOrderService {
 
                 List<CalendarEvent<WorkOrderBaseMiniDTO>> result = new ArrayList<>();
                 for (Long compId : companyIds) {
-                    result.addAll(preventiveMaintenanceService.getEvents(dateRange.getEnd(), compId).stream()
+                    SearchCriteria pmSearchCriteria = new SearchCriteria();
+                    pmSearchCriteria.getFilterFields().add(FilterField.builder()
+                            .field("company")
+                            .value(compId)
+                            .operation("eq")
+                            .values(new ArrayList<>()).build());
+                    pmSearchCriteria.getFilterFields().add(FilterField.builder()
+                            .field("createdAt")
+                            .operation("le")
+                            .value(dateRange.getEnd())
+                            .values(new ArrayList<>()).build());
+                    if (dateRange.getFilterFields() != null) {
+                        Set<String> pmFields = Set.of(
+                                "dueDate", "priority", "estimatedDuration", "estimatedStartDate",
+                                "description", "title", "requiredSignature", "image",
+                                "category", "location", "team", "primaryUser",
+                                "assignedTo", "customers", "files", "asset",
+                                "company", "createdBy", "createdAt", "updatedAt"
+                        );
+                        dateRange.getFilterFields().stream()
+                                .filter(f -> pmFields.contains(f.getField()))
+                                .forEach(pmSearchCriteria.getFilterFields()::add);
+                    }
+                    result.addAll(preventiveMaintenanceService.getEventsByCriteria(pmSearchCriteria).stream()
                             .filter(calendarEvent -> calendarEvent.getDate().after(new Date()))
                             .filter(calendarEvent -> canViewWorkOrderBase(user, calendarEvent.getEvent()))
                             .map(calendarEvent -> new CalendarEvent<>(calendarEvent.getType(),
                                     preventiveMaintenanceMapper.toBaseMiniDto(calendarEvent.getEvent()),
-                                    calendarEvent.getDate()))
+                                    calendarEvent.getDate(),
+                                    calendarEvent.getEndDate()))
                             .toList());
-                    result.addAll(findByDueDateBetweenAndCompany(dateRange.getStart(),
-                            dateRange.getEnd(),
-                            compId).stream().filter(workOrder -> canViewWorkOrderBase(user, workOrder)).map(workOrderMapper::toBaseMiniDto).map(workOrderMiniDTO -> new CalendarEvent<>("WORK_ORDER",
-                            workOrderMiniDTO, workOrderMiniDTO.getDueDate())).toList());
+
+                    SearchCriteria woSearchCriteria = new SearchCriteria();
+                    if (dateRange.getFilterFields() != null) {
+                        woSearchCriteria.getFilterFields().addAll(dateRange.getFilterFields());
+                    }
+                    woSearchCriteria = getSearchCriteria(user, woSearchCriteria);
+                    SpecificationBuilder<WorkOrder> builder = new SpecificationBuilder<>();
+                    woSearchCriteria.getFilterFields().forEach(builder::with);
+                    Specification<WorkOrder> spec = builder.build();
+                    Specification<WorkOrder> dateSpec = buildDateRangeSpec(dateRange.getStart(), dateRange.getEnd());
+                    spec = spec != null ? spec.and(dateSpec) : dateSpec;
+                    workOrderRepository.findAll(spec).stream()
+                            .filter(workOrder -> canViewWorkOrderBase(user, workOrder))
+                            .map(workOrder -> {
+                                WorkOrderBaseMiniDTO miniDto = workOrderMapper.toBaseMiniDto(workOrder);
+                                long durationMillis = workOrder.getEstimatedDuration() > 0
+                                        ? (long) (workOrder.getEstimatedDuration() * 3600_000)
+                                        : 3600_000L;
+                                Date eventDate;
+                                Date eventEndDate;
+                                if (workOrder.getEstimatedStartDate() != null) {
+                                    eventDate = workOrder.getEstimatedStartDate();
+                                    eventEndDate = new Date(eventDate.getTime() + durationMillis);
+                                } else {
+                                    eventEndDate = workOrder.getDueDate();
+                                    eventDate = new Date(eventEndDate.getTime() - durationMillis);
+                                }
+                                return new CalendarEvent<>("WORK_ORDER", miniDto, eventDate, eventEndDate);
+                            })
+                            .forEach(result::add);
                 }
                 return result;
             });

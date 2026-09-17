@@ -12,6 +12,21 @@ module.exports = {
         })
       );
     }
+    if (env === 'production' && process.env.SENTRY_AUTH_TOKEN) {
+      const { sentryWebpackPlugin } = require('@sentry/webpack-plugin');
+      config.plugins.push(
+        sentryWebpackPlugin({
+          org: process.env.SENTRY_ORG,
+          project: 'frontend',
+          authToken: process.env.SENTRY_AUTH_TOKEN,
+          release: {
+            name:
+              process.env.REACT_APP_SENTRY_RELEASE || 'atlas-frontend',
+            create: true
+          }
+        })
+      );
+    }
     return config;
   },
 

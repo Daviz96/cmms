@@ -171,7 +171,7 @@ oauth2:
   client-id: ${OAUTH2_CLIENT_ID:}
   client-secret: ${OAUTH2_CLIENT_SECRET:}
 license-key: ${LICENSE_KEY:}
-license-fingerprint-required: ${LICENSE_FINGERPRINT_REQUIRED:true}
+license-fingerprint-required: ${LICENSE_FINGERPRINT_REQUIRED:false}
 license-file-path: ${LICENSE_FILE_PATH:}
 licensing:
   # MOD-001: when true, entitlements are resolved locally (self-hosted policy) and Keygen is not contacted.
@@ -233,6 +233,15 @@ sendgrid:
     email: ${SENDGRID_FROM_EMAIL:}
 intercom:
   token: ${INTERCOM_TOKEN:}
+sentry:
+  # Self-hosted deviation: Sentry stays off unless a DSN is provided, and PII is never sent by
+  # default. Upstream hardcodes send-default-pii: true, which would ship user data off-premise
+  # the moment a DSN is set.
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:production}
+  release: ${SENTRY_RELEASE:}
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.1}
+  send-default-pii: ${SENTRY_SEND_PII:false}
 springdoc:
   api-docs:
     version: openapi_3_1
