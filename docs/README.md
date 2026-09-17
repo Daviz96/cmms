@@ -1,6 +1,6 @@
 # Atlas CMMS — versione self-hosted Bratex
 
-> README della **nostra** versione di Atlas CMMS (fork `Daviz96/cmms`, branch `self-hosted`).
+> README della **nostra** versione di Atlas CMMS (fork `Daviz96/cmms`, branch `self-hosted`, che e' anche il default branch).
 > Il [README.md](../README.md) alla radice è quello di upstream `Grashjs/cmms` e descrive il
 > prodotto ufficiale: **non** riflette le nostre modifiche, le nostre immagini né il nostro deploy.
 >
@@ -128,6 +128,18 @@ Oltre a quelle del [README upstream](../README.md#set-environment-variables):
 **Non** usare l'app ufficiale dagli store: serve il nostro **APK self-hosted**. Il link e il QR
 code arrivano nelle mail di invito e benvenuto; nel frontend c'è il dialog "scarica app".
 Alla prima apertura: schermata di login → "Custom server" → indirizzo del server → Salva.
+
+## 9-bis. Struttura del fork
+
+- **`self-hosted`** e' il default branch e l'unico su cui si lavora.
+- **`main` non esiste piu'** (eliminato il 2026-09-17): era il punto di fork congelato al 24 agosto,
+  154 commit indietro e senza un solo commit esclusivo. Per confrontarsi con upstream si usa
+  direttamente `Grashjs:main...Daviz96:self-hosted`, oppure in locale `git diff upstream/main self-hosted`.
+- Gli altri ~28 branch remoti (`asset-search`, `camera-fix`, `ldap`, ...) sono **copie identiche di
+  quelli di upstream**, ereditate al momento del fork. Non contengono nostro lavoro.
+- **GitHub Actions disabilitate.** Il workflow `main-ci.yml` ereditato da upstream builda immagini
+  `intelloop/*`, le pubblica su Docker Hub e deploya su Koyeb e Netlify: non e' la nostra pipeline.
+  Le nostre immagini si costruiscono e si pubblicano a mano (vedi §3 e §6).
 
 ## 10. Sincronizzarsi con upstream
 

@@ -2,7 +2,7 @@
 
 > **Documento master di stato.** Snapshot dello stato reale (produzione) + storico delle versioni.
 > Aggiornato: **2026-09-17**. Deployment live: `https://cmms.firmabratex.pl` (LAN-only dietro Caddy, TLS wildcard).
-> Fork: `Daviz96/cmms`, branch **`self-hosted`** (allineato con `origin`). Immagini: Docker Hub `dablio96/self-hosted-cmms-*`.
+> Fork: `Daviz96/cmms`, branch **`self-hosted`** = **default branch** (dal 2026-09-17; `main` eliminato perche' congelato al punto di fork e senza commit esclusivi). GitHub Actions **disabilitate** sul fork: il workflow ereditato da upstream pubblica immagini `intelloop/*` e deploya su Koyeb/Netlify, roba non nostra. Immagini: Docker Hub `dablio96/self-hosted-cmms-*`.
 > Fotografia puntuale del giorno: [project-snapshot-2026-09-07.md](project-snapshot-2026-09-07.md).
 
 ---

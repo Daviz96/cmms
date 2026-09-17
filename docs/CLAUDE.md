@@ -13,7 +13,7 @@ tests and persistent documentation.
 
 **Current focus:** **PRODUZIONE STABILE su `v1.4.0`** (sync upstream completato e rilasciato il 2026-09-17). Deployment
 self-hosted **live** su `https://cmms.firmabratex.pl` (LAN-only, dietro **Caddy** TLS wildcard; `SELF_HOSTED`;
-DB originale preservato). Fork `Daviz96/cmms`, branch **`self-hosted`**. I **bug storici 1/2/3** e il **sync upstream**
+DB originale preservato). Fork `Daviz96/cmms`, branch **`self-hosted`** (= **default branch** dal 2026-09-17; `main` e `sync-upstream` eliminati, non avevano commit esclusivi). **GitHub Actions disabilitate sul fork**: `main-ci.yml` ereditato da upstream pubblica immagini `intelloop/*` e deploya su Koyeb/Netlify. I **bug storici 1/2/3** e il **sync upstream**
 sono **risolti e live**. Ultimo rilascio: **`v1.3.0`** (backend+frontend, 2026-09-07) — **visibilità asset per
 assegnazione** (ruoli senza `viewOther ASSETS` vedono/usano solo gli asset assegnati). `latest` su Docker Hub corretto →
 `v1.3.0`. **📊 Stato reale + changelog storico completo: [docs/PROJECT-STATUS.md](PROJECT-STATUS.md)**
