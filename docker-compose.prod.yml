@@ -5,8 +5,18 @@
 #   - nginx: nessuna porta host pubblicata; Caddy raggiunge atlas_nginx sulla rete Docker
 #   - postgres/minio: bind-mount su /srv/data/databases/atlas/*  -> MAI `docker compose down -v`
 #
-# Swap di versione:   ATLAS_VERSION=self-hosted-vX.Y.Z nel .env
-#                     docker compose pull api frontend && docker compose up -d && docker compose restart nginx
+# Versioni delle immagini, nel .env:
+#   ATLAS_VERSION=self-hosted-vX.Y.Z            -> vale per backend E frontend (caso normale)
+#   ATLAS_API_VERSION / ATLAS_FRONTEND_VERSION  -> sovrascrivono la singola immagine
+#
+# Servono perche' le release NON sono sempre sincronizzate: v1.2.1 fu solo backend e v1.2.2
+# solo frontend, quindi i due repo Docker Hub hanno set di tag diversi. Con una sola variabile
+# si finirebbe a cercare un tag inesistente sull'altro repo e il pull fallirebbe. Esempio di
+# rilascio del solo backend:
+#   ATLAS_VERSION=self-hosted-v1.4.0
+#   ATLAS_API_VERSION=self-hosted-v1.4.1
+#
+# Swap:  docker compose pull api frontend && docker compose up -d && docker compose restart nginx
 #
 # NB: `docker compose pull` SENZA argomenti fallisce, perche' l'immagine minio/minio non
 # esiste piu' su Docker Hub (vedi commento sul servizio minio). Pullare solo api e frontend.
@@ -25,7 +35,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   api:
-    image: dablio96/self-hosted-cmms-backend:${ATLAS_VERSION:-self-hosted-v1.3.0}
+    image: dablio96/self-hosted-cmms-backend:${ATLAS_API_VERSION:-${ATLAS_VERSION:-self-hosted-v1.4.0}}
     container_name: atlas-cmms-backend
     depends_on:
       - postgres
@@ -106,7 +116,7 @@ services:
       - "8080"
 
   frontend:
-    image: dablio96/self-hosted-cmms-frontend:${ATLAS_VERSION:-self-hosted-v1.3.0}
+    image: dablio96/self-hosted-cmms-frontend:${ATLAS_FRONTEND_VERSION:-${ATLAS_VERSION:-self-hosted-v1.4.0}}
     container_name: atlas-cmms-frontend
     environment:
       API_URL: /api

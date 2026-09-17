@@ -45,6 +45,12 @@ dablio96/self-hosted-cmms-frontend:self-hosted-vX.Y.Z
 `latest` punta all'ultima versione in produzione. Le `-rcN` sono release candidate da testare
 prima della promozione.
 
+⚠️ **I due repo non hanno gli stessi tag.** Le release non sono sempre sincronizzate: `v1.2.1` fu
+solo backend, `v1.2.2` solo frontend. Quindi un tag che esiste per il backend puo' non esistere per
+il frontend. Per questo il compose di produzione usa `ATLAS_API_VERSION` e `ATLAS_FRONTEND_VERSION`
+oltre ad `ATLAS_VERSION`: con una sola variabile, rilasciare un solo componente farebbe cercare un
+tag inesistente sull'altro repo e il `pull` fallirebbe.
+
 ## 4. File di compose: quale usare
 
 | File | Uso |
@@ -71,7 +77,10 @@ caratteri non-base64 fa fallire l'avvio del backend con `Illegal base64 characte
 docker exec atlas_db pg_dump -U atlas atlas > atlas_$(date +%F).sql
 
 # 2. scegli la versione
-echo "ATLAS_VERSION=self-hosted-vX.Y.Z" >> .env     # oppure modifica il valore esistente
+echo "ATLAS_VERSION=self-hosted-vX.Y.Z" >> .env     # backend E frontend
+# se rilasci una sola delle due, sovrascrivi la singola immagine:
+#   ATLAS_API_VERSION=self-hosted-v1.4.1            # solo backend
+#   ATLAS_FRONTEND_VERSION=self-hosted-v1.4.1       # solo frontend
 
 # 3. swap — pullare SOLO api e frontend (vedi §7)
 docker compose pull api frontend
@@ -109,7 +118,9 @@ Oltre a quelle del [README upstream](../README.md#set-environment-variables):
 |---|---|---|
 | `LICENSING_SELF_HOSTED_MODE` | `false` | **`true` in produzione.** Concede gli entitlement localmente, senza Keygen. |
 | `LICENSE_FINGERPRINT_REQUIRED` | `false` | Lasciare `false` in self-hosted. |
-| `ATLAS_VERSION` | `self-hosted-v1.3.0` | Tag delle immagini usato da `docker-compose.prod.yml`. |
+| `ATLAS_VERSION` | `self-hosted-v1.4.0` | Tag usato da `docker-compose.prod.yml` per **entrambe** le immagini. |
+| `ATLAS_API_VERSION` | = `ATLAS_VERSION` | Sovrascrive il tag del **solo backend**. |
+| `ATLAS_FRONTEND_VERSION` | = `ATLAS_VERSION` | Sovrascrive il tag del **solo frontend**. |
 | `SENTRY_DSN` | vuoto | Vuoto = Sentry **disattivato**. Da lasciare vuoto salvo decisione esplicita. |
 | `SENTRY_SEND_PII` | `false` | Nostra aggiunta: upstream lo hardcoda a `true`. Non alzarlo. |
 | `CLARITY_ID` | vuoto | Microsoft Clarity, disattivato. La variabile deve comunque **esistere** (vedi §7.5). |
