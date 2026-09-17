@@ -33,7 +33,8 @@ docker run --rm --network atlas-cmms_default \
   --entrypoint sh quay.io/minio/mc:latest -c '
     mc alias set a http://minio:9000 "$MU" "$MP" --api S3v4 >/dev/null
     echo "--- utenti IAM ---";      mc admin user list a
-    echo "--- service account ---"; mc admin svcacct ls a "$MU"
+    echo "--- service account ---"; mc admin user svcacct ls a "$MU"
+    echo "--- access key ---";      mc admin accesskey ls a 2>/dev/null || true
     echo "--- policy ---";          mc admin policy ls a
   '
 ```
@@ -43,8 +44,15 @@ docker run --rm --network atlas-cmms_default \
 > non finiscono in `docker inspect`. Si usa `mc alias set` invece di `MC_HOST_...` perche'
 > quest'ultimo e' una URL, e una secret base64 con `+` o `=` richiederebbe l'escaping.
 
-- **Nessun utente e nessun service account** (caso atteso: usiamo solo la root) -> **strada A**.
+- **Nessun utente e nessun service account** -> **strada A** (caso atteso: usiamo solo la root).
 - **Ci sono voci IAM** -> **strada B**.
+
+Sotto *policy* compaiono sempre le cinque predefinite di MinIO (`consoleAdmin`, `diagnostics`,
+`readonly`, `readwrite`, `writeonly`): sono built-in e non contano. Conta solo la presenza di
+utenti o service account creati da noi.
+
+> Il sottocomando corretto e' `mc admin user svcacct` (non `mc admin svcacct`); nelle versioni
+> recenti esiste anche `mc admin accesskey`. Verificabile con `mc admin user --help`.
 
 > Nota: `mc` viene scaricato da `quay.io` perche' il repo Docker Hub `minio/minio` non esiste piu'.
 
