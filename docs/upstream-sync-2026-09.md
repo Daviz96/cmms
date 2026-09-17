@@ -12,6 +12,55 @@ Microsoft Clarity (4), validazione invito per super admin (3), fix upload file.
 
 Dopo il merge il branch è **0 commit indietro** da upstream.
 
+## 1-bis. Cosa cambia, rispetto a `v1.3.0`
+
+**93 commit** (3 merge). 85 di Ibrahima G. Coulibaly e 1 di Héctor Javier Amigo (upstream),
+4 nostri. **132 file, +12.826 / −2.113.**
+
+### Visibile agli utenti
+
+| Novita' | Dove si vede | Commit |
+|---|---|---|
+| **Lingua scelta dall'utente** | il profilo (web e mobile) ha il selettore lingua; la preferenza e' salvata su `own_user.language` e usata per interfaccia e mail. E' la feature legata alla nostra migrazione DB | `bd91ede5`, `6e615386`, `207affc9` |
+| **Filtri sul calendario work order** | nuovi filtri in `MoreFilters` applicati anche alla vista calendario | `5cd8036a`, `70f11c72` |
+| **Eventi del calendario con data di fine** | prima gli eventi non avevano `endDate`; ora la durata e' corretta, con fallback se `estimatedDuration` e' nullo | `6e95474e`, `3c1670ac`, `4f680340` |
+| **Location dell'asset ereditata dal padre** | creando un asset figlio senza location, prende quella del padre | `50db0808`, `0501c6ee` |
+| **Niente auto-notifiche** | chi compie l'azione non riceve piu' la notifica di se stesso (`excludeCurrentUser`) | `959b9173` |
+| **I tecnici vedono i ricambi** | `PARTS_AND_MULTIPARTS` aggiunto ai `viewPermissions` del ruolo Technician | `37015ac6` |
+| **Labor: stop bloccato se gia' fermo** | non si puo' piu' fermare due volte la stessa registrazione di manodopera | `dc2d650b` |
+| **Vendor: campo azienda** | `companyName` su `VendorPatchDTO`, con validazione | `18e16588` |
+
+### Sicurezza
+
+| Cambiamento | Commit |
+|---|---|
+| Reset password bloccato per utenti **disabilitati** | `ee1751db` |
+| Registrazione come **super admin** solo su invito via email | `5a16a833`, `3ec07122`, `e30ba365` |
+| Sanitizzazione dei dati utente | `69f882fc` |
+| `autocomplete` corretto sui campi password (login, registrazione, profilo) | `b379fea6` |
+
+### Sotto il cofano
+
+- **Refactor massiccio dei controller** verso `@CurrentUser`, al posto di `HttpServletRequest`:
+  Part, Location, PreventiveMaintenance, Request, Role, Team, Reading, Notification, Currency,
+  MultiParts, Import, File, Meter, Vendor. E' da qui che nasce il conflitto su `RequestController`.
+- **~400 test nuovi**: PartService/PartController, NotificationService, LocationController +
+  integration, PreventiveMaintenance, RequestController/Service, WorkOrder repository/service.
+- **Sentry** (17 commit) e **Microsoft Clarity** (4) integrati in backend, frontend e mobile —
+  da noi **disattivati** (DSN/ID vuoti) e con `send-default-pii` forzato a `false`.
+- **CI**: smoke test self-host, deploy di produzione, hook EAS per le source map mobile.
+- Paddle: controllo sul cambio piano mensile (`c0f92d12`, `062e3d40`). Irrilevante per noi.
+- Documentazione upstream: `Upgrading.md`, guida al refactoring dei servizi.
+
+### I nostri 4 commit
+
+| Commit | Contenuto |
+|---|---|
+| `534242df` | merge degli 88 commit, 2 conflitti risolti, deviazioni MinIO e Sentry-PII |
+| `15eff08e` | `docker-compose.prod.yml` tracciato; il frontend builda dai sorgenti e non dall'immagine upstream |
+| `42104348` | adattati i 20 test upstream ereditati rossi + `@Mock` mancante |
+| `c996487c`, `f0a9497b` | documentazione: suite 1872/0/0 e deploy live |
+
 ## 2. Conflitti (2, entrambi risolti)
 
 | File | Natura | Risoluzione |
