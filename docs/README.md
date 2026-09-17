@@ -161,14 +161,22 @@ deploy, promozione. Sincronizzare **spesso e in piccoli batch**.
 Si usa `scripts/backup/atlas-backup.sh`, che salva **entrambe** le cose: dump PostgreSQL e
 mirror del bucket MinIO. Un `pg_dump` da solo lascerebbe fuori tutti gli allegati.
 
+Due varianti nel repo:
+
+| File | Uso |
+|---|---|
+| `scripts/backup/atlas-backup.sh` | generica (upstream + le nostre correzioni di sicurezza) |
+| `scripts/backup/atlas-backup-bratex.sh` | **quella del nostro server**: `BACKUP_DIR=/srv/data/backups/atlas_backups`, `.env` da `/srv/docker/atlas/.env` (percorso assoluto, quindi si lancia da qualsiasi directory e da cron), client `mc` dal canale aistor |
+
 ```bash
-sudo ./atlas-backup.sh backup                          # DB + MinIO
-sudo ./atlas-backup.sh backup --skip-files             # solo DB
-sudo ./atlas-backup.sh restore atlas_backup_<TS>.tar.gz
+sudo ./atlas-backup-bratex.sh backup                              # DB + MinIO
+sudo ./atlas-backup-bratex.sh backup --skip-files                 # solo DB
+sudo ./atlas-backup-bratex.sh restore /srv/data/backups/atlas_backups/atlas_backup_<TS>.tar.gz
 ```
 
-Sul server la copia in uso e' personalizzata: `BACKUP_DIR=/srv/data/backups/atlas_backups`,
-`.env` letto da `/srv/docker/atlas/`.
+Il `restore` vuole il **percorso del file**, non solo il nome: non lo cerca dentro `BACKUP_DIR`.
+I due percorsi si possono sovrascrivere da ambiente senza modificare il file:
+`BACKUP_DIR=/mnt/nas ./atlas-backup-bratex.sh backup`.
 
 ⚠️ **Gli archivi prodotti prima del 2026-09-17 contengono le credenziali root di MinIO in
 chiaro.** Lo script scriveva l'helper `minio_backup.sh` con un heredoc non quotato, quindi bash
