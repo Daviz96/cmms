@@ -1,5 +1,8 @@
 # Rotazione della chiave MinIO
 
+> **Eseguita il 2026-09-17** (strada A: nessuna voce IAM). Documento conservato come procedura
+> riutilizzabile per le rotazioni future.
+
 > Procedura per sostituire `MINIO_PASSWORD` in produzione (`/srv/docker/atlas`).
 > Motivo della rotazione (2026-09-17): fino alla correzione di `atlas-backup.sh` la secret
 > finiva in chiaro in ogni archivio di backup. Vedi [README.md](README.md) §10-bis.

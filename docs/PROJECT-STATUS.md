@@ -87,11 +87,15 @@ server swap `frontend` → `pull`+`up -d`+`restart nginx`.
   comunque il logo di default. Precede il sync v1.4.0, comportamento identico alla v1.3.0 in
   produzione. Fix: far scegliere la risorsa a `EmailService2` in base a `white-labeling.logo-paths`,
   mantenendo il CID.
-- **Ruotare la chiave MinIO** (aperto dal 2026-09-17): fino alla correzione di oggi, ogni
+- ✅ **Chiave MinIO ruotata (2026-09-17).** Causa: fino alla correzione di oggi ogni
   `atlas_backup_*.tar.gz` conteneva utente e secret root di MinIO in chiaro (heredoc non quotato
-  in `atlas-backup.sh`, helper archiviato nel tar). Script corretto e verificato su un backup
-  reale (0 credenziali nell'archivio, restore riuscito). Resta da eseguire la **rotazione della
-  chiave**: procedura pronta in [minio-key-rotation.md](minio-key-rotation.md).
+  in `atlas-backup.sh`, helper archiviato nel tar). Script corretto e verificato su un backup reale
+  (0 credenziali nell'archivio, restore riuscito). Ricognizione IAM: nessun utente, nessun service
+  account, nessuna policy custom -> rotazione diretta (strada A), `MINIO_USER` invariato.
+  Verificato: MinIO accetta le nuove credenziali, backend ripartito (`Started ApiApplication`),
+  backup completo riuscito con la chiave nuova. Procedura: [minio-key-rotation.md](minio-key-rotation.md).
+  **Nota:** i backup precedenti al 2026-09-17 contengono la secret vecchia, ormai inutile, ma
+  restano da valutare per la cancellazione.
 - **File untracked da decidere** (lasciati così per ora, 2026-09-07): ~~`docker-compose.prod.yml`~~ (**risolto 2026-09-17**: ora tracciato e fedele al server,
   con i tag delle immagini scritti esplicitamente) e `images/download-apk.png` (848 B, non referenziata nel frontend). Da
   aggiornare/gitignorare oppure cancellare in futuro.
