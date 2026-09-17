@@ -1800,6 +1800,7 @@ const plJSON = {
     'Wygląda na to, że nie masz jeszcze żadnych portali zgłoszeń.',
   'noRows.request_portal.action': 'Utwórz swój pierwszy portal zgłoszeń',
   request_title: 'Tytuł zgłoszenia',
+  portal_title_station: 'Stanowisko/maszyna/inne',
   configure_form_fields: 'Konfiguruj pola formularza',
   allow_selection_from_all_locations:
     'Zezwól na wybór ze wszystkich lokalizacji',

@@ -34,12 +34,15 @@ import { FIELD_DEFS } from '../../Settings/Features/RequestPortal/components/Req
 // ---------------------------------------------------------------------------
 
 export type SelectionMode = 'all' | 'specific';
+// Which label the (always present, always required) title input shows.
+export type TitleMode = 'classic' | 'station';
 
 export interface PreviewFieldConfig {
   type: PortalFieldType | 'TITLE';
   enabled: boolean;
   required: boolean;
   selectionMode: SelectionMode;
+  titleMode?: TitleMode;
   location?: LocationMiniDTO | null;
   asset?: AssetMiniDTO | null;
 }
@@ -121,6 +124,17 @@ export const buildDefaultConfigs = (
           (!existingFields?.length && defaultEnabledFields.includes(def.type)),
       required: def.alwaysRequired ? true : existing?.required ?? false,
       selectionMode,
+      // The title mode is derived, never stored for TITLE itself: a STATION row means
+      // the new label, its absence means the classic one. A brand new portal (no fields
+      // yet) defaults to STATION; an existing portal keeps the label it already had.
+      titleMode:
+        def.type === 'TITLE'
+          ? existingFields?.some((f) => (f.type as string) === 'STATION')
+            ? 'station'
+            : existingFields?.length
+            ? 'classic'
+            : 'station'
+          : undefined,
       location: existing?.location
         ? (existing.location as unknown as LocationMiniDTO)
         : null,
@@ -133,8 +147,8 @@ export const buildDefaultConfigs = (
 
 export const configsToFields = (
   configs: PreviewFieldConfig[]
-): RequestPortalField[] =>
-  configs
+): RequestPortalField[] => {
+  const fields = configs
     .filter((c) => c.enabled && c.type !== 'TITLE')
     .map((c) => ({
       type: c.type as PortalFieldType,
@@ -142,6 +156,19 @@ export const configsToFields = (
       asset: c.asset ? (c.asset as unknown as Asset) : null,
       required: c.required
     }));
+  // TITLE is implicit and never persisted. A STATION row is written only to record
+  // which label the form should show; it carries no value of its own.
+  const title = configs.find((c) => c.type === 'TITLE');
+  if (title?.titleMode === 'station') {
+    fields.push({
+      type: 'STATION',
+      location: null,
+      asset: null,
+      required: true
+    });
+  }
+  return fields;
+};
 
 // ---------------------------------------------------------------------------
 // AssetLocationClause - Simplified component for asset/location selection
@@ -377,7 +404,12 @@ function PreviewFieldRender({
           <TextField
             fullWidth
             disabled={disabled}
-            label={getLabel(t('request_title'), config.required)}
+            label={getLabel(
+              config.titleMode === 'station'
+                ? t('portal_title_station')
+                : t('request_title'),
+              config.required
+            )}
             required={config.required}
             error={!!error}
             helperText={error}

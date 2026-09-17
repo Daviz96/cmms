@@ -25,7 +25,9 @@ export type PortalFieldType =
   | 'CONTACT'
   | 'IMAGE'
   | 'LOCATION'
-  | 'FILES';
+  | 'FILES'
+  // Not a visible field: marks the title input as "workstation / machine / other".
+  | 'STATION';
 
 export interface RequestPortalPostDTO {
   title: string;

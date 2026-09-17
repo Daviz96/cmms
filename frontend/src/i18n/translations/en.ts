@@ -1684,6 +1684,7 @@ const locale = {
     "Looks like you don't have any Request Portals yet.",
   'noRows.request_portal.action': 'Create your first Request Portal',
   request_title: 'Request title',
+  portal_title_station: 'Workstation / machine / other',
   configure_form_fields: 'Configure form fields',
   allow_selection_from_all_locations: 'Allow selection from all locations',
   allow_selection_from_all_assets: 'Allow selection from all assets',

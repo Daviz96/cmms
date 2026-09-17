@@ -47,7 +47,8 @@ import {
   buildDefaultConfigs,
   configsToFields,
   PreviewFieldConfig,
-  SelectionMode
+  SelectionMode,
+  TitleMode
 } from '../../../../components/form/RequestPortalPreview';
 import { AssetMiniDTO } from '../../../../../../models/owns/asset';
 import { LocationMiniDTO } from '../../../../../../models/owns/location';
@@ -81,6 +82,8 @@ interface FieldDef {
   alwaysEnabled?: boolean;
   alwaysRequired?: boolean;
   hasSelectionPanel?: boolean;
+  // Panel with the two title-label modes (classic / workstation-machine-other).
+  hasTitleModePanel?: boolean;
   publicWarningKey?: string;
 }
 
@@ -90,7 +93,8 @@ export const FIELD_DEFS: FieldDef[] = [
     icon: <TitleOutlinedIcon fontSize="small" />,
     labelKey: 'request_title',
     alwaysEnabled: true,
-    alwaysRequired: true
+    alwaysRequired: true,
+    hasTitleModePanel: true
   },
   {
     type: 'LOCATION',
@@ -137,6 +141,7 @@ function FieldRow({
   onToggleEnabled,
   onToggleRequired,
   onSelectionModeChange,
+  onTitleModeChange,
   onAssetSelect,
   onLocationSelect,
   t
@@ -146,6 +151,7 @@ function FieldRow({
   onToggleEnabled: () => void;
   onToggleRequired: () => void;
   onSelectionModeChange: (m: SelectionMode) => void;
+  onTitleModeChange: (m: TitleMode) => void;
   onAssetSelect?: (asset: AssetMiniDTO | null) => void;
   onLocationSelect?: (location: LocationMiniDTO | null) => void;
   t: (k: string) => string;
@@ -263,7 +269,9 @@ function FieldRow({
           <Tooltip
             style={{
               visibility:
-                def.hasSelectionPanel && config.enabled ? 'visible' : 'hidden'
+                (def.hasSelectionPanel || def.hasTitleModePanel) && config.enabled
+                ? 'visible'
+                : 'hidden'
             }}
             title={showCollapse ? t('hide_options') : t('show_options')}
           >
@@ -283,6 +291,41 @@ function FieldRow({
           </Tooltip>
         </Box>
       </Box>
+
+      {/* ── Title mode panel ── */}
+      {def.hasTitleModePanel && (
+        <Collapse in={showCollapse}>
+          <Divider />
+          <Box sx={{ px: 2.5, py: 1.5 }}>
+            <RadioGroup
+              value={config.titleMode ?? 'station'}
+              onChange={(e) =>
+                onTitleModeChange(e.target.value as TitleMode)
+              }
+            >
+              <FormControlLabel
+                value="classic"
+                control={<Radio size="small" />}
+                label={
+                  <Typography variant="body2" color="text.secondary">
+                    {t('request_title')}
+                  </Typography>
+                }
+                sx={{ mb: 0.5 }}
+              />
+              <FormControlLabel
+                value="station"
+                control={<Radio size="small" />}
+                label={
+                  <Typography variant="body2" color="text.secondary">
+                    {t('portal_title_station')}
+                  </Typography>
+                }
+              />
+            </RadioGroup>
+          </Box>
+        </Collapse>
+      )}
 
       {/* ── Options panel ── */}
       {def.hasSelectionPanel && (
@@ -535,6 +578,7 @@ export default function RequestPortalModal({
                     onToggleRequired={() =>
                       updateConfig(i, { required: !fieldConfigs[i].required })
                     }
+                    onTitleModeChange={(m) => updateConfig(i, { titleMode: m })}
                     onSelectionModeChange={(m) =>
                       updateConfig(i, {
                         selectionMode: m,
