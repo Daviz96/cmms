@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -68,7 +69,10 @@ class MainLayoutTemplateTest extends AbstractTemplateTest {
 
         assertFalse(html.contains("Continue"));
         assertFalse(html.contains("href=\"https://app.example.com/work-orders/1\""));
-        assertFalse(html.contains("target=\"_blank\""));
+        // Self-hosted: questo file contiene anche il fragment appSection (download APK), il cui
+        // link usa legittimamente target="_blank". Verifichiamo che l'unica occorrenza sia quella,
+        // cioe' che il bottone del work order non sia stato renderizzato.
+        assertEquals(1, html.split("target=\"_blank\"", -1).length - 1);
     }
 
     @Test
@@ -77,7 +81,11 @@ class MainLayoutTemplateTest extends AbstractTemplateTest {
 
         String html = render(variables, Locale.ENGLISH);
 
-        assertTrue(html.contains("https://api.example.com/images/logo.png"));
+        // Self-hosted: il logo e' incorporato inline via CID (vedi main-layout.html e
+        // EmailService2.addInline("logo", ...)) invece di essere linkato da api.host, cosi' i client
+        // di posta non lo bloccano. I test upstream asseriscono l'URL remoto: qui asseriamo il CID.
+        assertTrue(html.contains("cid:logo"));
+        assertFalse(html.contains("https://api.example.com/images/logo.png"));
     }
 
     @Test
@@ -90,8 +98,12 @@ class MainLayoutTemplateTest extends AbstractTemplateTest {
 
         String html = render(variables, Locale.ENGLISH);
 
-        assertTrue(html.contains("https://api.example.com/images/custom-logo.png"));
-        assertFalse(html.contains("/images/logo.png"));
+        // Self-hosted: il logo nelle mail e' sempre il CID inline, quindi il white-labeling non
+        // cambia il markup renderizzato. NOTA: EmailService2.resourceFile e' fisso su
+        // classpath:/static/images/logo.png, quindi oggi il logo custom NON arriva nelle mail.
+        // Punto aperto tracciato in docs/PROJECT-STATUS.md.
+        assertTrue(html.contains("cid:logo"));
+        assertFalse(html.contains("custom-logo.png"));
     }
 
     @Test

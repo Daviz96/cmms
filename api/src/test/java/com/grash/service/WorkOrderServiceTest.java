@@ -20,6 +20,7 @@ import com.grash.model.Currency;
 import com.grash.model.enums.*;
 import com.grash.model.enums.webhook.WOField;
 import com.grash.model.enums.webhook.WebhookEvent;
+import com.grash.repository.SuperAccountRelationRepository;
 import com.grash.repository.WorkOrderRepository;
 import com.grash.utils.Consts;
 import com.grash.utils.PdfReportUtils;
@@ -60,6 +61,11 @@ class WorkOrderServiceTest {
 
     @Mock
     private WorkOrderRepository workOrderRepository;
+    // Self-hosted: WorkOrderService legge le relazioni super-account con una query diretta
+    // (fix Bug 3, session-safe) invece di navigare la collection LAZY su User. I test upstream
+    // popolano solo user.setSuperAccountRelations(...), quindi il repository va mockato qui.
+    @Mock
+    private SuperAccountRelationRepository superAccountRelationRepository;
     @Mock
     private TeamService teamService;
     @Mock
@@ -1440,6 +1446,8 @@ class WorkOrderServiceTest {
                     .childUser(childUser1)
                     .build();
             user.setSuperAccountRelations(new ArrayList<>(List.of(rel)));
+            when(superAccountRelationRepository.findChildCompanyIdsBySuperUserId(user.getId()))
+                    .thenReturn(List.of(2L));
 
             SearchCriteria criteria = new SearchCriteria();
             SearchCriteria result = workOrderService.getSearchCriteria(user, criteria);
@@ -2465,6 +2473,8 @@ class WorkOrderServiceTest {
             SuperAccountRelation relation = new SuperAccountRelation();
             relation.setChildUser(childUser);
             user.setSuperAccountRelations(List.of(relation));
+            when(superAccountRelationRepository.findChildCompanyIdsBySuperUserId(user.getId()))
+                    .thenReturn(List.of(2L));
 
             when(preventiveMaintenanceService.getEventsByCriteria(any(SearchCriteria.class)))
                     .thenReturn(Collections.emptyList());

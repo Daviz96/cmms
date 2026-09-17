@@ -11,7 +11,7 @@ The project is worked on incrementally through numbered `MOD-xxx` modules.
 Each module is audited, implemented only when necessary, and then verified with
 tests and persistent documentation.
 
-**Current focus:** **PRODUZIONE STABILE — manutenzione e fix incrementali** (post sync upstream). Deployment
+**Current focus:** **SYNC UPSTREAM v1.4.0 — rc pubblicata, deploy live da eseguire.** Deployment
 self-hosted **live** su `https://cmms.firmabratex.pl` (LAN-only, dietro **Caddy** TLS wildcard; `SELF_HOSTED`;
 DB originale preservato). Fork `Daviz96/cmms`, branch **`self-hosted`**. I **bug storici 1/2/3** e il **sync upstream**
 sono **risolti e live**. Ultimo rilascio: **`v1.3.0`** (backend+frontend, 2026-09-07) — **visibilità asset per
@@ -19,6 +19,22 @@ assegnazione** (ruoli senza `viewOther ASSETS` vedono/usano solo gli asset asseg
 `v1.3.0`. **📊 Stato reale + changelog storico completo: [docs/PROJECT-STATUS.md](PROJECT-STATUS.md)**
 (fonte di verità). Dettaglio bug storici → [live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md);
 sync upstream → [upstream-sync-plan.md](upstream-sync-plan.md).
+
+**Stato (aggiornato 2026-09-17) — v1.4.0 SYNC UPSTREAM:** merge di **88 commit** `Grashjs/cmms`
+(31 ago → 16 set) sul branch **`sync-upstream`**, ricreato da `self-hosted`. Branch **0 commit indietro** da upstream.
+2 soli conflitti (`RequestController`, `FileService`), risolti preservando l'**asset scoping v1.3.0** (spostato in
+`RequestService.create(RequestPostDTO, User)`). **Deviazioni deliberate:** MinIO **non** aggiornato (upstream passa a
+`alpine/minio`; rollback dello storage non garantito — e `minio/minio` non esiste più su Docker Hub, quindi
+`docker compose pull` va fatto **solo** su `api frontend`); `sentry.send-default-pii` forzato a `${SENTRY_SEND_PII:false}`.
+**DB:** una sola migrazione additiva (`own_user.language`, int nullable) — verificata sul dump reale di produzione
+(813→815 changeset) e **rollback provato**: il backend v1.3.0 riparte sul DB migrato. **Test funzionali sui dati reali:**
+login, 152 asset / 6 WO / 3 richieste / 3 parti / 30 location, allegati via nginx `/storage` (4/4, byte identici),
+asset scoping A/B (152 con `Administrator`, 1 con `Rola Bratex`). **Suite Maven:** le 20 failures erano **preesistenti**
+(identiche pre-merge, test upstream ereditati senza adattarli) → adattate in questo sync; aggiunto il `@Mock` di
+`SuperAccountRelationRepository` mancante. **Immagini `-rc1` pubblicate**, `latest` ancora su `v1.3.0`.
+⚠️ **Lo swap non è solo un cambio di tag**: il frontend v1.4.0 esce con `Error getting 'CLARITY_ID' from process.env`
+se il compose non passa `CLARITY_ID`/`SENTRY_*` (già presenti in `docker-compose.prod.yml`, ora tracciato; il `.env`
+non va toccato). Dettagli: **[upstream-sync-2026-09.md](upstream-sync-2026-09.md)**.
 
 **Stato (aggiornato 2026-09-07):** tutte le versioni fino a **`v1.3.0` (backend+frontend)** sono
 **LIVE** su `cmms.firmabratex.pl`. **`v1.3.0`**: visibilità asset per assegnazione (branch
@@ -29,6 +45,7 @@ token + reconnect su CONNECT scaduto, commit `973daaa3`) — batch frontend **bu
 Porta host `3000` **chiusa** (solo Caddy → `atlas_nginx:80`; niente più accesso HTTP grezzo). Branch `self-hosted`
 allineato con `origin`. **Snapshot puntuale 2026-09-07:** [docs/project-snapshot-2026-09-07.md](project-snapshot-2026-09-07.md).
 **📊 Fonte di verità dello stato + changelog storico: [docs/PROJECT-STATUS.md](PROJECT-STATUS.md).**
+**📖 README della nostra versione (deploy, trappole operative, differenze da upstream): [docs/README.md](README.md).**
 Dettagli: bug storici 1/2/3 → [live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md); sync upstream →
 [upstream-sync-plan.md](upstream-sync-plan.md). **Gotcha:** dati in **bind-mount** (mai `down -v`); dopo swap immagini
 → **`restart nginx`**; SSH pilotato dall'assistente non possibile (chiave con passphrase + sudo) → deploy via runbook

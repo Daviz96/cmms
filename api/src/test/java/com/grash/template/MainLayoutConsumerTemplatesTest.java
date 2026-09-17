@@ -291,7 +291,10 @@ class MainLayoutConsumerTemplatesTest extends AbstractTemplateTest {
         if (link != null) {
             assertTrue(html.contains("href=\"" + link + "\""));
         }
-        assertTrue(html.contains("https://api.example.com/images/logo.png"));
+        // Self-hosted: il logo e' incorporato inline via CID (vedi main-layout.html e
+        // EmailService2.addInline("logo", ...)) invece di essere linkato da api.host, cosi' i client
+        // di posta non lo bloccano. I test upstream asseriscono l'URL remoto: qui asseriamo il CID.
+        assertTrue(html.contains("cid:logo"));
         assertTrue(html.contains("Atlas Team"));
     }
 

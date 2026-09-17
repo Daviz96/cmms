@@ -385,14 +385,16 @@ class AuthControllerTest extends AbstractControllerTest {
         void logout_revokesSessionsAndReturnsSuccess() throws Exception {
             setCurrentUser(clientUser);
             when(userService.whoami(any())).thenReturn(clientUser);
-            when(userService.invalidateSessions(clientUser)).thenReturn(clientUser);
+            // Self-hosted (fix Bug 1): AuthController.logout invalida le sessioni per id
+            // (invalidateSessionsById, void) invece di passare l'entita' User, per evitare il
+            // conflict_error in auto-eliminazione. Il test upstream verificava invalidateSessions.
 
             mockMvc.perform(post("/auth/logout"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.message").value("Logged out successfully"));
 
-            verify(userService).invalidateSessions(clientUser);
+            verify(userService).invalidateSessionsById(clientUser.getId());
         }
 
         @Test

@@ -1,7 +1,7 @@
 # Atlas CMMS self-hosted — Stato del progetto & Changelog
 
 > **Documento master di stato.** Snapshot dello stato reale (produzione) + storico delle versioni.
-> Aggiornato: **2026-09-07**. Deployment live: `https://cmms.firmabratex.pl` (LAN-only dietro Caddy, TLS wildcard).
+> Aggiornato: **2026-09-17**. Deployment live: `https://cmms.firmabratex.pl` (LAN-only dietro Caddy, TLS wildcard).
 > Fork: `Daviz96/cmms`, branch **`self-hosted`** (allineato con `origin`). Immagini: Docker Hub `dablio96/self-hosted-cmms-*`.
 > Fotografia puntuale del giorno: [project-snapshot-2026-09-07.md](project-snapshot-2026-09-07.md).
 
@@ -45,7 +45,9 @@ Ordine cronologico. "Deploy" = attivo in produzione.
 | **v1.2.2** | **Batch frontend**: i18n PL `timers` "Liczniki"→**"Timery"** (era uguale a meters); **fix WebSocket** import/export/notifiche (su CONNECT con token scaduto → refresh token + reconnect, prima falliva in silenzio "WebSocket connection not initialized") | `377fa3bd`,`973daaa3` | ✅ (2026-09-07, solo frontend) |
 | **v1.3.0** | **Feature: visibilità asset per assegnazione.** Un ruolo con `view ASSETS` ma **senza `viewOther ASSETS`** vede/usa **solo** gli asset a lui assegnati (creatore, primaryUser, assignedTo, team) in **lista/albero** (lista piatta) e **picker** WO/richiesta; create WO/richiesta valida `canBeViewedBy` (403). Backend + frontend. Sviluppata su branch `feature/asset-visibility-scoping`, testata sul LAN, mergiata. | `64f91a6d`,`6ddca8f7` | ✅ (2026-09-07) |
 
-**Immagini Docker Hub:** backend `v1.0.0..v1.2.1`, `v1.3.0`; frontend `v1.0.2`, `v1.1.0`, `v1.2.0`, `v1.2.2`, `v1.3.0`
+| **v1.4.0** | **Sync upstream** (88 commit `Grashjs/cmms`, 31 ago → 16 set): Sentry, Microsoft Clarity, test nuovi, CI, PartService, invito obbligatorio per super admin, fix upload file. 2 conflitti risolti; MinIO **non** aggiornato di proposito; `sentry.send-default-pii` forzato a `false`. Migrazione DB additiva (`own_user.language`). Adattati 20 test upstream rimasti rossi dal sync precedente. | `534242df` | ⏳ `-rc1` pubblicata, deploy da fare |
+
+**Immagini Docker Hub:** backend `v1.0.0..v1.2.1`, `v1.3.0`, **`v1.4.0-rc1`**; frontend `v1.0.2`, `v1.1.0`, `v1.2.0`, `v1.2.2`, `v1.3.0`, **`v1.4.0-rc1`**
 (il frontend è cambiato solo in quei punti; `v1.2.1` fu solo backend). **`latest`** (backend+frontend) **corretto**
 (2026-09-07) → punta a **`v1.3.0`** (prima era disallineato a una versione vecchia). RC di lavoro: `v1.3.0-rc1`
 (= digest di `v1.3.0`). Tag git: solo `self-hosted-v1.0.0` (le altre = commit + tag immagine).
@@ -74,8 +76,14 @@ server swap `frontend` → `pull`+`up -d`+`restart nginx`.
 - **Tag git** per le versioni `v1.0.1..v1.3.0` (oggi solo `v1.0.0`), per storico più pulito.
 - **Asset scoping — fase 2** (follow-up di v1.3.0): validare l'asset anche nei **patch** WO/richiesta che lo cambiano;
   valutare lo scoping di PM/meter/parti collegati ad asset fuori scope. Vedi [feature-proposals/asset-visibility-scoping.md](feature-proposals/asset-visibility-scoping.md) §10.
-- **File untracked da decidere** (lasciati così per ora, 2026-09-07): `docker-compose.prod.yml` (bozza stale, pinna
-  `v1.0.1`, non è ciò che gira sul server) e `images/download-apk.png` (848 B, non referenziata nel frontend). Da
+- **Logo white-label assente nelle mail** (scoperto 2026-09-17): da quando le immagini sono
+  inline (CID, v1.0.1) il template usa `<img src="cid:logo">` e `EmailService2.resourceFile` è
+  fisso su `classpath:/static/images/logo.png`. Con `LOGO_PATHS` configurato le mail mostrano
+  comunque il logo di default. Precede il sync v1.4.0, comportamento identico alla v1.3.0 in
+  produzione. Fix: far scegliere la risorsa a `EmailService2` in base a `white-labeling.logo-paths`,
+  mantenendo il CID.
+- **File untracked da decidere** (lasciati così per ora, 2026-09-07): ~~`docker-compose.prod.yml`~~ (**risolto 2026-09-17**: ora tracciato e fedele al server,
+  con `ATLAS_VERSION` per il tag) e `images/download-apk.png` (848 B, non referenziata nel frontend). Da
   aggiornare/gitignorare oppure cancellare in futuro.
 
 ---
@@ -94,6 +102,7 @@ server swap `frontend` → `pull`+`up -d`+`restart nginx`.
 - **Snapshot + storico:** questo file.
 - **Bug storici (1/2/3) risolti:** [live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md).
 - **Sync upstream (procedura):** [upstream-sync-plan.md](upstream-sync-plan.md).
+- **Sync upstream 2026-09 (v1.4.0, eseguito):** [upstream-sync-2026-09.md](upstream-sync-2026-09.md) — conflitti, deviazioni, test, runbook.
 - **Feature crea-utente (design):** [admin-invite-vs-create-user-plan.md](admin-invite-vs-create-user-plan.md).
 - **Runbook deploy backend:** `dev-docs/deploy-v1.1.0-runbook.md` (riusabile bumpando la versione), `dev-docs/upgrade-to-self-hosted.md` (locali, non pushati).
 - **Seed dati test:** `dev-docs/seed_test_data.py` (locale).
