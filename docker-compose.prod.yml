@@ -1,3 +1,15 @@
+# Atlas CMMS - compose di PRODUZIONE (/srv/docker/atlas sul server).
+#
+# Differenze rispetto a docker-compose.yml (che builda dai sorgenti, per sviluppo):
+#   - api/frontend: immagini pubblicate su Docker Hub, versione da ${ATLAS_VERSION}
+#   - nginx: nessuna porta host pubblicata; Caddy raggiunge atlas_nginx sulla rete Docker
+#   - postgres/minio: bind-mount su /srv/data/databases/atlas/*  -> MAI `docker compose down -v`
+#
+# Swap di versione:   ATLAS_VERSION=self-hosted-vX.Y.Z nel .env
+#                     docker compose pull api frontend && docker compose up -d && docker compose restart nginx
+#
+# NB: `docker compose pull` SENZA argomenti fallisce, perche' l'immagine minio/minio non
+# esiste piu' su Docker Hub (vedi commento sul servizio minio). Pullare solo api e frontend.
 name: atlas-cmms
 services:
   postgres:
@@ -13,14 +25,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   api:
-    # MOD-006: build the backend from the repository sources so a self-hosted deploy
-    # runs the modified code (MOD-001 self-hosted licensing, MOD-004B attachment
-    # security), not the upstream prebuilt image. `docker compose build` (or `up` on a
-    # fresh checkout) produces this image from ./api; the explicit local tag makes the
-    # running image's provenance obvious and avoids accidentally pulling upstream.
-    build:
-      context: ./api
-    image: atlas-cmms-backend:local
+    image: dablio96/self-hosted-cmms-backend:${ATLAS_VERSION:-self-hosted-v1.3.0}
     container_name: atlas-cmms-backend
     depends_on:
       - postgres
@@ -101,12 +106,7 @@ services:
       - "8080"
 
   frontend:
-    # Same reasoning as the api service above: build from the repository sources so a
-    # self-hosted deploy runs our frontend (self-hosted APK download dialog, PL i18n
-    # fixes, WebSocket token refresh), not upstream's prebuilt intelloop image.
-    build:
-      context: ./frontend
-    image: atlas-cmms-frontend:local
+    image: dablio96/self-hosted-cmms-frontend:${ATLAS_VERSION:-self-hosted-v1.3.0}
     container_name: atlas-cmms-frontend
     environment:
       API_URL: /api
@@ -166,10 +166,19 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       # If terminating TLS directly in this container, also mount certs:
       # - ./certs:/etc/nginx/certs:ro
-    ports:
-      - "3000:80"
-      # - "443:443"
+    expose:
+      - "80"
 
 volumes:
   postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /srv/data/databases/atlas/postgres
   minio_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /srv/data/databases/atlas/minio
