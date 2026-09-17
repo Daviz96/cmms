@@ -46,17 +46,20 @@ dablio96/self-hosted-cmms-frontend:self-hosted-vX.Y.Z
 prima della promozione.
 
 ⚠️ **I due repo non hanno gli stessi tag.** Le release non sono sempre sincronizzate: `v1.2.1` fu
-solo backend, `v1.2.2` solo frontend. Quindi un tag che esiste per il backend puo' non esistere per
-il frontend. Per questo il compose di produzione usa `ATLAS_API_VERSION` e `ATLAS_FRONTEND_VERSION`
-oltre ad `ATLAS_VERSION`: con una sola variabile, rilasciare un solo componente farebbe cercare un
-tag inesistente sull'altro repo e il `pull` fallirebbe.
+solo backend, `v1.2.2` solo frontend. Un tag che esiste per il backend puo' non esistere per il
+frontend. Per questo in `docker-compose.prod.yml` le due righe `image:` sono **indipendenti** e si
+aggiornano separatamente: non esiste una variabile unica che le tenga insieme, proprio per non
+poter chiedere un tag inesistente.
+
+Il tag sta nel compose, non nel `.env`: `grep 'image: dablio96' docker-compose.yml` dice sempre
+cosa gira, e il commit che tocca quelle righe e' il registro del deploy.
 
 ## 4. File di compose: quale usare
 
 | File | Uso |
 |---|---|
 | `docker-compose.yml` | **Sviluppo**: builda backend e frontend dai sorgenti (`atlas-cmms-backend:local`, `atlas-cmms-frontend:local`). Volumi Docker normali, nginx esposto su `3000`. |
-| `docker-compose.prod.yml` | **Produzione** (`/srv/docker/atlas`): immagini pubblicate su Docker Hub via `ATLAS_VERSION`, nginx senza porta host (ci arriva Caddy sulla rete Docker), dati in **bind-mount** su `/srv/data/databases/atlas/*`. |
+| `docker-compose.prod.yml` | **Produzione** (`/srv/docker/atlas`): immagini pubblicate su Docker Hub con il **tag scritto esplicitamente**, nginx senza porta host (ci arriva Caddy sulla rete Docker), dati in **bind-mount** su `/srv/data/databases/atlas/*`. |
 
 ## 5. Avvio in locale (sviluppo)
 
@@ -76,18 +79,16 @@ caratteri non-base64 fa fallire l'avvio del backend con `Illegal base64 characte
 # 1. backup (obbligatorio)
 docker exec atlas_db pg_dump -U atlas atlas > atlas_$(date +%F).sql
 
-# 2. scegli la versione
-echo "ATLAS_VERSION=self-hosted-vX.Y.Z" >> .env     # backend E frontend
-# se rilasci una sola delle due, sovrascrivi la singola immagine:
-#   ATLAS_API_VERSION=self-hosted-v1.4.1            # solo backend
-#   ATLAS_FRONTEND_VERSION=self-hosted-v1.4.1       # solo frontend
+# 2. aggiorna il tag nel compose (righe image: di api e/o frontend)
+#    le due righe sono INDIPENDENTI: se la release tocca solo il backend, lascia fermo il frontend
+sudo grep -n 'image: dablio96' docker-compose.yml
 
 # 3. swap — pullare SOLO api e frontend (vedi §7)
 docker compose pull api frontend
 docker compose up -d
 docker compose restart nginx
 
-# rollback: rimetti la ATLAS_VERSION precedente e ripeti i passi 3
+# rollback: rimetti i tag precedenti nelle righe image: e ripeti il passo 3
 ```
 
 Il deploy va eseguito a mano sul server: la chiave SSH ha passphrase e richiede sudo, quindi
@@ -118,9 +119,6 @@ Oltre a quelle del [README upstream](../README.md#set-environment-variables):
 |---|---|---|
 | `LICENSING_SELF_HOSTED_MODE` | `false` | **`true` in produzione.** Concede gli entitlement localmente, senza Keygen. |
 | `LICENSE_FINGERPRINT_REQUIRED` | `false` | Lasciare `false` in self-hosted. |
-| `ATLAS_VERSION` | `self-hosted-v1.4.0` | Tag usato da `docker-compose.prod.yml` per **entrambe** le immagini. |
-| `ATLAS_API_VERSION` | = `ATLAS_VERSION` | Sovrascrive il tag del **solo backend**. |
-| `ATLAS_FRONTEND_VERSION` | = `ATLAS_VERSION` | Sovrascrive il tag del **solo frontend**. |
 | `SENTRY_DSN` | vuoto | Vuoto = Sentry **disattivato**. Da lasciare vuoto salvo decisione esplicita. |
 | `SENTRY_SEND_PII` | `false` | Nostra aggiunta: upstream lo hardcoda a `true`. Non alzarlo. |
 | `CLARITY_ID` | vuoto | Microsoft Clarity, disattivato. La variabile deve comunque **esistere** (vedi §7.5). |

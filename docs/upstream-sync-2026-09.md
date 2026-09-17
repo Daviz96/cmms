@@ -104,7 +104,7 @@ il `.env` non va toccato (verificato sul `.env` reale di produzione).
 
 ```bash
 docker exec atlas_db pg_dump -U atlas atlas > atlas_$(date +%F).sql   # backup obbligatorio
-# ATLAS_VERSION nel .env (o ATLAS_API_VERSION / ATLAS_FRONTEND_VERSION per una sola immagine)
+# aggiorna le righe image: di api e/o frontend nel compose (sono indipendenti)
 docker compose pull api frontend && docker compose up -d && docker compose restart nginx
 # rollback: rimetti :self-hosted-v1.3.0 e ripeti pull/up/restart
 ```
