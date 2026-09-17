@@ -31,7 +31,9 @@ sync upstream → [upstream-sync-plan.md](upstream-sync-plan.md).
 login, 152 asset / 6 WO / 3 richieste / 3 parti / 30 location, allegati via nginx `/storage` (4/4, byte identici),
 asset scoping A/B (152 con `Administrator`, 1 con `Rola Bratex`). **Suite Maven:** le 20 failures erano **preesistenti**
 (identiche pre-merge, test upstream ereditati senza adattarli) → adattate in questo sync; aggiunto il `@Mock` di
-`SuperAccountRelationRepository` mancante. **Immagini `-rc1` pubblicate**, `latest` ancora su `v1.3.0`.
+`SuperAccountRelationRepository` mancante. **Suite completa verde: 1872 run / 0 failures / 0 errors**, Testcontainers
+inclusi (socket Docker montato). Baseline test aggiornata: la vecchia `1446/1446` e i 6 fallimenti di
+`PasswordValidatorTest` (F20-1) non si ripresentano. **Immagini `-rc1` pubblicate**, `latest` ancora su `v1.3.0`.
 ⚠️ **Lo swap non è solo un cambio di tag**: il frontend v1.4.0 esce con `Error getting 'CLARITY_ID' from process.env`
 se il compose non passa `CLARITY_ID`/`SENTRY_*` (già presenti in `docker-compose.prod.yml`, ora tracciato; il `.env`
 non va toccato). Dettagli: **[upstream-sync-2026-09.md](upstream-sync-2026-09.md)**.

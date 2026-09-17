@@ -74,6 +74,7 @@ frontend + nginx), restore del dump e degli allegati:
 | `self-hosted` **pre-merge** | 304 | **20** | 9 | ❌ |
 | `self-hosted` + merge, prima dei fix | 307 | **20** | 21 | ❌ |
 | `self-hosted` + merge, **dopo i fix** | 307 | 0 | 0 | ✅ |
+| `self-hosted` + merge, **suite completa** | **1872** | **0** | **0** | ✅ |
 
 **Il merge non ha introdotto regressioni**: le 20 failures erano identiche prima e dopo. Erano
 test upstream ereditati in un sync precedente senza adattarli al comportamento self-hosted, e
@@ -89,8 +90,10 @@ la v1.3.0 è andata in produzione con quelli rossi. Adattati ora:
 - `AuthControllerTest.logout` — verificava `invalidateSessions`; il nostro `logout` chiama
   `invalidateSessionsById` (fix Bug 1). Verify aggiornato.
 
-Gli 8 `*IntegrationTest` falliscono solo per assenza del socket Docker nell'ambiente di test
-(Testcontainers), non per il codice.
+**Suite completa rieseguita col socket Docker montato** (`-v /var/run/docker.sock:/var/run/docker.sock`,
+`TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal`): **1872 run / 0 failures / 0 errors**, inclusi
+gli 8 `*IntegrationTest` che nei giri precedenti non partivano per assenza del socket. Nessun test
+rosso resta sul branch.
 
 ## 6. Deploy
 
