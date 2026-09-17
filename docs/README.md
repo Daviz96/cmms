@@ -135,8 +135,12 @@ Alla prima apertura: schermata di login → "Custom server" → indirizzo del se
 - **`main` non esiste piu'** (eliminato il 2026-09-17): era il punto di fork congelato al 24 agosto,
   154 commit indietro e senza un solo commit esclusivo. Per confrontarsi con upstream si usa
   direttamente `Grashjs:main...Daviz96:self-hosted`, oppure in locale `git diff upstream/main self-hosted`.
-- Gli altri ~28 branch remoti (`asset-search`, `camera-fix`, `ldap`, ...) sono **copie identiche di
-  quelli di upstream**, ereditate al momento del fork. Non contengono nostro lavoro.
+- **`self-hosted` e' l'unico branch del fork.** I 28 branch ereditati al momento del fork
+  (`asset-search`, `camera-fix`, `ldap`, `java-17`, ...) sono stati eliminati il 2026-09-17: erano
+  copie byte per byte di quelli di upstream, verificate una per una prima di cancellarle, e
+  restano disponibili su `Grashjs/cmms`. La regola e': **sul fork stanno solo i branch nostri**.
+- I **tag** invece sono ancora misti: `self-hosted-v1.0.0`, `-v1.3.0`, `-v1.4.0` sono nostri;
+  `v1.0.0`..`v1.8.0`, `deployed-backend` e `deployed-frontend` vengono da upstream.
 - **GitHub Actions disabilitate.** Il workflow `main-ci.yml` ereditato da upstream builda immagini
   `intelloop/*`, le pubblica su Docker Hub e deploya su Koyeb e Netlify: non e' la nostra pipeline.
   Le nostre immagini si costruiscono e si pubblicano a mano (vedi §3 e §6).
