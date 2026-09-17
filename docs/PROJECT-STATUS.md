@@ -87,6 +87,10 @@ server swap `frontend` → `pull`+`up -d`+`restart nginx`.
   comunque il logo di default. Precede il sync v1.4.0, comportamento identico alla v1.3.0 in
   produzione. Fix: far scegliere la risorsa a `EmailService2` in base a `white-labeling.logo-paths`,
   mantenendo il CID.
+- **Ruotare la chiave MinIO** (aperto dal 2026-09-17): fino alla correzione di oggi, ogni
+  `atlas_backup_*.tar.gz` conteneva utente e secret root di MinIO in chiaro (heredoc non quotato
+  in `atlas-backup.sh`, helper archiviato nel tar). Script corretto; restano da valutare la
+  rotazione della chiave e il trattamento dei backup gia' prodotti.
 - **File untracked da decidere** (lasciati così per ora, 2026-09-07): ~~`docker-compose.prod.yml`~~ (**risolto 2026-09-17**: ora tracciato e fedele al server,
   con i tag delle immagini scritti esplicitamente) e `images/download-apk.png` (848 B, non referenziata nel frontend). Da
   aggiornare/gitignorare oppure cancellare in futuro.

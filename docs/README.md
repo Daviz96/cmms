@@ -76,8 +76,9 @@ caratteri non-base64 fa fallire l'avvio del backend con `Illegal base64 characte
 ## 6. Deploy in produzione
 
 ```bash
-# 1. backup (obbligatorio)
-docker exec atlas_db pg_dump -U atlas atlas > atlas_$(date +%F).sql
+# 1. backup (obbligatorio) - usa lo script, che salva DB **e** allegati MinIO
+sudo ./scripts/backup/atlas-backup.sh backup
+# (il pg_dump da solo copre il database ma NON il bucket MinIO)
 
 # 2. aggiorna il tag nel compose (righe image: di api e/o frontend)
 #    le due righe sono INDIPENDENTI: se la release tocca solo il backend, lascia fermo il frontend
@@ -154,6 +155,27 @@ In breve: branch usa-e-getta da `self-hosted`, `git merge upstream/main`, risolu
 **adattamento dei test upstream** al nostro comportamento (è la parte più lunga: upstream scrive
 test che asseriscono il proprio comportamento, non il nostro), build, test sui dati reali, rc,
 deploy, promozione. Sincronizzare **spesso e in piccoli batch**.
+
+## 10-bis. Backup e restore
+
+Si usa `scripts/backup/atlas-backup.sh`, che salva **entrambe** le cose: dump PostgreSQL e
+mirror del bucket MinIO. Un `pg_dump` da solo lascerebbe fuori tutti gli allegati.
+
+```bash
+sudo ./atlas-backup.sh backup                          # DB + MinIO
+sudo ./atlas-backup.sh backup --skip-files             # solo DB
+sudo ./atlas-backup.sh restore atlas_backup_<TS>.tar.gz
+```
+
+Sul server la copia in uso e' personalizzata: `BACKUP_DIR=/srv/data/backups/atlas_backups`,
+`.env` letto da `/srv/docker/atlas/`.
+
+⚠️ **Gli archivi prodotti prima del 2026-09-17 contengono le credenziali root di MinIO in
+chiaro.** Lo script scriveva l'helper `minio_backup.sh` con un heredoc non quotato, quindi bash
+espandeva `$MINIO_USER` / `$MINIO_PASSWORD` dentro il file, che finiva poi nel tar. Corretto
+(delimitatore quotato + credenziali passate al container via `-e` + helper escluso
+dall'archivio), ma i backup vecchi vanno trattati come materiale sensibile e la chiave MinIO
+andrebbe ruotata.
 
 ## 11. Dove guardare
 

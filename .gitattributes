@@ -1,0 +1,5 @@
+# Gli script di shell girano su Linux (server, container): devono restare LF anche
+# quando il repo viene clonato su Windows con core.autocrlf=true. Senza questa riga
+# un checkout Windows li converte in CRLF e, copiati sul server, falliscono con
+# "bad interpreter: /bin/bash^M".
+*.sh text eol=lf

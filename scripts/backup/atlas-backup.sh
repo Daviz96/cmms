@@ -127,7 +127,11 @@ backup_atlas_cmms() {
         mkdir -p "$TEMP_DIR/minio_data"
 
         # Create a script to run inside a temporary container
-        cat > "$TEMP_DIR/minio_backup.sh" << EOL
+        # SECURITY: delimitatore QUOTATO -> $MINIO_USER / $MINIO_PASSWORD restano letterali
+        # nel file e vengono risolti dentro il container dall'ambiente. Con il delimitatore
+        # non quotato bash li espandeva qui, scrivendo le credenziali root di MinIO in chiaro
+        # in questo file, che finiva dentro OGNI archivio di backup.
+        cat > "$TEMP_DIR/minio_backup.sh" << 'EOL'
 #!/bin/sh
 set -e
 wget -q https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc
@@ -144,6 +148,8 @@ EOL
 
         docker run --rm \
             --network atlas-cmms_default \
+            -e MINIO_USER="$MINIO_USER" \
+            -e MINIO_PASSWORD="$MINIO_PASSWORD" \
             -v "$TEMP_DIR/minio_backup.sh:/minio_backup.sh" \
             -v "$TEMP_DIR/minio_data:/backup_data" \
             alpine:latest /bin/sh /minio_backup.sh
@@ -160,7 +166,8 @@ EOL
 
     # Create backup archive
     echo "Creating backup archive..."
-    tar -czf "$BACKUP_DIR/$BACKUP_FILENAME" -C "$TEMP_DIR" .
+    # L'helper mc non viene archiviato: e' un artefatto di runtime, non dato di backup.
+    tar -czf "$BACKUP_DIR/$BACKUP_FILENAME" --exclude=./minio_backup.sh -C "$TEMP_DIR" .
 
     # Clean up
     rm -rf "$TEMP_DIR"
@@ -251,7 +258,8 @@ restore_atlas_cmms() {
         read -p "Continue with MinIO restore? (y/n): " confirm
         if [[ "$confirm" =~ ^[yY] ]]; then
             # Create a script to run inside a temporary container
-            cat > "$TEMP_DIR/minio_restore.sh" << EOL
+            # SECURITY: delimitatore quotato -- vedi la funzione di backup sopra.
+            cat > "$TEMP_DIR/minio_restore.sh" << 'EOL'
 #!/bin/sh
 set -e
 wget -q https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc
@@ -268,6 +276,8 @@ EOL
 
             docker run --rm \
                 --network atlas-cmms_default \
+                -e MINIO_USER="$MINIO_USER" \
+                -e MINIO_PASSWORD="$MINIO_PASSWORD" \
                 -v "$TEMP_DIR/minio_restore.sh:/minio_restore.sh" \
                 -v "$TEMP_DIR/minio_data:/backup_data" \
                 alpine:latest /bin/sh /minio_restore.sh
