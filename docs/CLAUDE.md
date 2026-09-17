@@ -11,7 +11,7 @@ The project is worked on incrementally through numbered `MOD-xxx` modules.
 Each module is audited, implemented only when necessary, and then verified with
 tests and persistent documentation.
 
-**Current focus:** **SYNC UPSTREAM v1.4.0 — rc pubblicata, deploy live da eseguire.** Deployment
+**Current focus:** **SYNC UPSTREAM v1.4.0 — `-rc1` DEPLOYATA LIVE il 2026-09-17, in validazione funzionale.** Deployment
 self-hosted **live** su `https://cmms.firmabratex.pl` (LAN-only, dietro **Caddy** TLS wildcard; `SELF_HOSTED`;
 DB originale preservato). Fork `Daviz96/cmms`, branch **`self-hosted`**. I **bug storici 1/2/3** e il **sync upstream**
 sono **risolti e live**. Ultimo rilascio: **`v1.3.0`** (backend+frontend, 2026-09-07) — **visibilità asset per
@@ -33,7 +33,7 @@ asset scoping A/B (152 con `Administrator`, 1 con `Rola Bratex`). **Suite Maven:
 (identiche pre-merge, test upstream ereditati senza adattarli) → adattate in questo sync; aggiunto il `@Mock` di
 `SuperAccountRelationRepository` mancante. **Suite completa verde: 1872 run / 0 failures / 0 errors**, Testcontainers
 inclusi (socket Docker montato). Baseline test aggiornata: la vecchia `1446/1446` e i 6 fallimenti di
-`PasswordValidatorTest` (F20-1) non si ripresentano. **Immagini `-rc1` pubblicate**, `latest` ancora su `v1.3.0`.
+`PasswordValidatorTest` (F20-1) non si ripresentano. **Immagini `-rc1` pubblicate e deployate live il 2026-09-17**: swap eseguito con `docker-compose.prod.yml`, Liquibase 813→815, `own_user.language` creata, `atlas_db`/`atlas_minio` **non ricreati** (bind-mount intatti), sito HTTP 200. `latest` ancora su `v1.3.0` fino alla promozione.
 ⚠️ **Lo swap non è solo un cambio di tag**: il frontend v1.4.0 esce con `Error getting 'CLARITY_ID' from process.env`
 se il compose non passa `CLARITY_ID`/`SENTRY_*` (già presenti in `docker-compose.prod.yml`, ora tracciato; il `.env`
 non va toccato). Dettagli: **[upstream-sync-2026-09.md](upstream-sync-2026-09.md)**.
