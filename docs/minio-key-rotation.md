@@ -29,9 +29,19 @@ root. Se ce ne sono, cambiare la root senza precauzioni li rende illeggibili. Ve
 cd /srv/docker/atlas
 set -a; . ./.env; set +a
 docker run --rm --network atlas-cmms_default \
-  -e MC_HOST_atlas="http://${MINIO_USER}:${MINIO_PASSWORD}@minio:9000" \
-  quay.io/minio/mc:latest sh -c 'mc admin user list atlas; echo "--- service account ---"; mc admin svcacct ls atlas '"${MINIO_USER}"'; echo "--- policy custom ---"; mc admin policy ls atlas'
+  -e MU="$MINIO_USER" -e MP="$MINIO_PASSWORD" \
+  --entrypoint sh quay.io/minio/mc:latest -c '
+    mc alias set a http://minio:9000 "$MU" "$MP" --api S3v4 >/dev/null
+    echo "--- utenti IAM ---";      mc admin user list a
+    echo "--- service account ---"; mc admin svcacct ls a "$MU"
+    echo "--- policy ---";          mc admin policy ls a
+  '
 ```
+
+> L'immagine `mc` ha `mc` come entrypoint: senza `--entrypoint sh` il comando verrebbe letto
+> come `mc sh` e fallirebbe. Le credenziali passano da `-e`, non sulla riga di comando, cosi'
+> non finiscono in `docker inspect`. Si usa `mc alias set` invece di `MC_HOST_...` perche'
+> quest'ultimo e' una URL, e una secret base64 con `+` o `=` richiederebbe l'escaping.
 
 - **Nessun utente e nessun service account** (caso atteso: usiamo solo la root) -> **strada A**.
 - **Ci sono voci IAM** -> **strada B**.
@@ -107,8 +117,10 @@ sudo docker compose ps
 # 2. MinIO accetta le NUOVE credenziali
 cd /srv/docker/atlas && set -a; . ./.env; set +a
 docker run --rm --network atlas-cmms_default \
-  -e MC_HOST_atlas="http://${MINIO_USER}:${MINIO_PASSWORD}@minio:9000" \
-  quay.io/minio/mc:latest mc ls atlas/atlas-bucket
+  -e MU="$MINIO_USER" -e MP="$MINIO_PASSWORD" \
+  --entrypoint sh quay.io/minio/mc:latest -c '
+    mc alias set a http://minio:9000 "$MU" "$MP" --api S3v4 && mc ls a/atlas-bucket
+  '
 
 # 3. il backend e' ripartito
 sudo docker compose logs --tail=30 api | grep -E 'Started ApiApplication|ERROR'
