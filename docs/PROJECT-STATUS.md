@@ -81,12 +81,16 @@ server swap `frontend` → `pull`+`up -d`+`restart nginx`.
 - **Tag git** per le versioni `v1.0.1..v1.3.0` (oggi solo `v1.0.0`), per storico più pulito.
 - **Asset scoping — fase 2** (follow-up di v1.3.0): validare l'asset anche nei **patch** WO/richiesta che lo cambiano;
   valutare lo scoping di PM/meter/parti collegati ad asset fuori scope. Vedi [feature-proposals/asset-visibility-scoping.md](feature-proposals/asset-visibility-scoping.md) §10.
-- **Logo white-label assente nelle mail** (scoperto 2026-09-17): da quando le immagini sono
-  inline (CID, v1.0.1) il template usa `<img src="cid:logo">` e `EmailService2.resourceFile` è
-  fisso su `classpath:/static/images/logo.png`. Con `LOGO_PATHS` configurato le mail mostrano
-  comunque il logo di default. Precede il sync v1.4.0, comportamento identico alla v1.3.0 in
-  produzione. Fix: far scegliere la risorsa a `EmailService2` in base a `white-labeling.logo-paths`,
-  mantenendo il CID.
+- **Logo white-label assente nelle mail — LATENTE, non attivo** (scoperto 2026-09-17):
+  da quando le immagini sono inline (CID, v1.0.1) il template usa `<img src="cid:logo">` e
+  `EmailService2.resourceFile` è fisso su `classpath:/static/images/logo.png` (dentro il jar),
+  quindi il ramo white-labeling del template upstream è sparito. **Oggi non ha effetto**:
+  `LOGO_PATHS`, `CUSTOM_COLORS` e `BRAND_CONFIG` sono tutte **vuote** in produzione, quindi le mail
+  mostrano il logo di default che mostrerebbero comunque. Il web non è interessato: il resource
+  handler serve `/images/**` anche da `file:/app/static/images/` (il bind-mount `./logo`).
+  Diventerebbe visibile solo attivando il white-labeling: logo personalizzato nell'interfaccia ma
+  non nelle mail. Fix a quel punto: far scegliere la risorsa a `EmailService2` in base a
+  `white-labeling.logo-paths`, mantenendo il CID inline.
 - ✅ **Chiave MinIO ruotata (2026-09-17).** Causa: fino alla correzione di oggi ogni
   `atlas_backup_*.tar.gz` conteneva utente e secret root di MinIO in chiaro (heredoc non quotato
   in `atlas-backup.sh`, helper archiviato nel tar). Script corretto e verificato su un backup reale
