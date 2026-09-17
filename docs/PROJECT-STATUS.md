@@ -84,7 +84,7 @@ server swap `frontend` → `pull`+`up -d`+`restart nginx`.
   produzione. Fix: far scegliere la risorsa a `EmailService2` in base a `white-labeling.logo-paths`,
   mantenendo il CID.
 - **File untracked da decidere** (lasciati così per ora, 2026-09-07): ~~`docker-compose.prod.yml`~~ (**risolto 2026-09-17**: ora tracciato e fedele al server,
-  con `ATLAS_VERSION` per il tag) e `images/download-apk.png` (848 B, non referenziata nel frontend). Da
+  con i tag delle immagini scritti esplicitamente) e `images/download-apk.png` (848 B, non referenziata nel frontend). Da
   aggiornare/gitignorare oppure cancellare in futuro.
 
 ---
