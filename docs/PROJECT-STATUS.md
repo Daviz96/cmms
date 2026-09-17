@@ -89,8 +89,9 @@ server swap `frontend` → `pull`+`up -d`+`restart nginx`.
   mantenendo il CID.
 - **Ruotare la chiave MinIO** (aperto dal 2026-09-17): fino alla correzione di oggi, ogni
   `atlas_backup_*.tar.gz` conteneva utente e secret root di MinIO in chiaro (heredoc non quotato
-  in `atlas-backup.sh`, helper archiviato nel tar). Script corretto; restano da valutare la
-  rotazione della chiave e il trattamento dei backup gia' prodotti.
+  in `atlas-backup.sh`, helper archiviato nel tar). Script corretto e verificato su un backup
+  reale (0 credenziali nell'archivio, restore riuscito). Resta da eseguire la **rotazione della
+  chiave**: procedura pronta in [minio-key-rotation.md](minio-key-rotation.md).
 - **File untracked da decidere** (lasciati così per ora, 2026-09-07): ~~`docker-compose.prod.yml`~~ (**risolto 2026-09-17**: ora tracciato e fedele al server,
   con i tag delle immagini scritti esplicitamente) e `images/download-apk.png` (848 B, non referenziata nel frontend). Da
   aggiornare/gitignorare oppure cancellare in futuro.

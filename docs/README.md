@@ -182,8 +182,8 @@ I due percorsi si possono sovrascrivere da ambiente senza modificare il file:
 chiaro.** Lo script scriveva l'helper `minio_backup.sh` con un heredoc non quotato, quindi bash
 espandeva `$MINIO_USER` / `$MINIO_PASSWORD` dentro il file, che finiva poi nel tar. Corretto
 (delimitatore quotato + credenziali passate al container via `-e` + helper escluso
-dall'archivio), ma i backup vecchi vanno trattati come materiale sensibile e la chiave MinIO
-andrebbe ruotata.
+dall'archivio), ma i backup vecchi contengono ancora la secret vecchia, e la chiave MinIO va
+ruotata: procedura in [minio-key-rotation.md](minio-key-rotation.md).
 
 ## 11. Dove guardare
 
@@ -194,4 +194,5 @@ andrebbe ruotata.
 | Schema del database | [database-schema.md](database-schema.md) |
 | Bug storici risolti | [live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md) |
 | Ultimo sync upstream | [upstream-sync-2026-09.md](upstream-sync-2026-09.md) |
+| Ruotare la chiave MinIO | [minio-key-rotation.md](minio-key-rotation.md) |
 | Feature asset scoping | [feature-proposals/asset-visibility-scoping.md](feature-proposals/asset-visibility-scoping.md) |
