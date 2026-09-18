@@ -9,7 +9,7 @@
 ```
 cmms.firmabratex.pl   -> 192.168.101.80    record PUBBLICO con IP privato (per questo oggi e' LAN-only)
 firmabratex.pl        -> 46.242.239.239    il sito, ospitato da home.pl
-IP pubblico sede      -> 193.34.139.17     uscita dell'ufficio, diverso dal sito
+IP pubblico sede      -> 193.34.139.17     uscita dell'ufficio, STATICO, diverso dal sito
 zona DNS              -> pannello home.pl, gestita da noi
 router/firewall       -> sotto il nostro controllo
 certificato           -> wildcard *.firmabratex.pl caricato a mano in Caddy, NON ACME
@@ -34,11 +34,15 @@ sono segreti e il wildcard li certifica tutti.
 Quindi il primo lavoro non e' aprire, e' **chiudere alla LAN i due siti interni**. Senza questo
 passo, "espongo solo il portale" diventa "espongo BookStack e il CMMS completo".
 
-## 3. Prerequisito da verificare
+## 3. Prerequisiti — tutti soddisfatti
 
-**`193.34.139.17` e' statico?** Chiedere al provider o controllare nel router. Se e' dinamico
-serve un DDNS che aggiorni il record A, altrimenti il QR smettera' di funzionare al primo cambio
-di IP. Tutto il resto della guida non cambia.
+- IP pubblico `193.34.139.17`: **statico** (confermato 2026-09-18). Nessun DDNS necessario, il
+  record A si scrive una volta sola.
+- Router/firewall: sotto il nostro controllo.
+- Zona DNS: gestita da noi dal pannello home.pl.
+- Certificato: wildcard gia' valido per qualsiasi sottodominio nuovo.
+
+Non restano incognite: il piano si puo' eseguire per intero.
 
 ## 4. Passo 1 — Rinforzare PRIMA di aprire
 
