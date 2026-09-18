@@ -10,7 +10,8 @@
 cmms.firmabratex.pl   -> 192.168.101.80    record PUBBLICO con IP privato (per questo oggi e' LAN-only)
 firmabratex.pl        -> 46.242.239.239    il sito, ospitato da home.pl
 IP pubblico sede      -> 193.34.139.17     uscita dell'ufficio, STATICO, diverso dal sito
-zona DNS              -> pannello home.pl, gestita da noi
+zona DNS pubblica     -> pannello home.pl, gestita da noi
+DNS interno           -> Windows Server (AD), risolve gia' cmms e wiki su 192.168.101.80
 router/firewall       -> sotto il nostro controllo
 certificato           -> wildcard *.firmabratex.pl caricato a mano in Caddy, NON ACME
 ```
@@ -209,21 +210,30 @@ HTTP-01. Una porta in meno e' una porta in meno.
 Le ultime due sono le piu' importanti: dimostrano che la chiusura alla LAN funziona davvero.
 Se rispondono 200, fermarsi e richiudere il port forward.
 
-## 9. Passo 6 — Il tranello del NAT loopback
+## 9. Passo 6 — Record sul DNS interno (split DNS)
 
-Quando `zgloszenia.firmabratex.pl` puntera' all'IP pubblico, **anche chi e' in ufficio** lo
-risolvera' cosi' e dovra' uscire per rientrare. Molti router non supportano il NAT loopback: in
-quel caso il QR **smette di funzionare proprio dalla LAN**, cioe' l'opposto di cio' che
-volevamo.
+Abbiamo un DNS interno che controlliamo: il Windows Server di dominio, dove `cmms` e `wiki`
+risolvono gia' su `192.168.101.80`. Sfruttarlo elimina alla radice il problema del NAT loopback.
 
-Verificare dal WiFi aziendale subito dopo il passo 4. Se non funziona, aggiungere un record
-interno sul DNS aziendale:
+Aggiungere lo stesso tipo di record, con la struttura gia' usata per gli altri due:
 
 ```
-zgloszenia.firmabratex.pl -> 192.168.101.80
+zgloszenia.firmabratex.pl   A   192.168.101.80
 ```
 
-Farlo **prima** di distribuire i QR code.
+Risultato:
+
+| Chi risolve | Dove | Percorso |
+|---|---|---|
+| dispositivi sul WiFi aziendale | AD DNS | 192.168.101.80, il traffico resta in LAN |
+| chiunque da internet | zona home.pl | 193.34.139.17, entra dal port forward |
+
+Fatto questo, il file `hosts` sul PC non serve piu' per le prove interne.
+
+⚠️ **Attenzione ai telefoni con "DNS privato" (DoH/DoT).** Android e iOS recenti possono
+scavalcare il DNS della rete: quei dispositivi otterrebbero l'IP pubblico anche stando in
+ufficio, e dipenderebbero dal NAT loopback. E' lo scenario esatto del nostro caso d'uso, quindi
+**provare il QR con un telefono connesso al WiFi aziendale** prima di stamparne una serie.
 
 ## 10. Passo 7 — Rigenerare i QR code
 
@@ -264,3 +274,11 @@ Il punto 1 da solo riporta la situazione allo stato di oggi.
   segnalazioni. E' lo scopo. reCAPTCHA e rate limiting sono le contromisure, non il segreto
   dell'URL.
 - **L'IP pubblico della sede**, ora associato a un hostname noto.
+
+## 14. Pulizia possibile, in seguito
+
+Nella zona pubblica di home.pl, `cmms.firmabratex.pl` punta a `192.168.101.80`: un indirizzo
+privato, inutilizzabile da fuori, che serve solo ai dispositivi in LAN che **non** usano l'AD DNS.
+Se tutti passano dal DNS di dominio, quel record espone il nostro indirizzamento interno senza
+dare nulla in cambio e si puo' rimuovere. Da valutare **dopo** aver completato l'esposizione, non
+durante.
