@@ -131,14 +131,30 @@ zgloszenia.firmabratex.pl {
 		path /api/locations/public/mini/*
 		path /api/assets/public/mini/*
 	}
-	@api_resto path /api/*
+	@api_resto {
+		path /api/*
+	}
 
-	handle @api_portale { reverse_proxy atlas_nginx:80 }
-	handle @api_resto   { respond 403 }
+	handle @api_portale {
+		reverse_proxy atlas_nginx:80
+	}
+	handle @api_resto {
+		respond 403
+	}
 	# Tutto il resto = file statici dell'app React (serve anche la pagina del portale).
-	handle              { reverse_proxy atlas_nginx:80 }
+	handle {
+		reverse_proxy atlas_nginx:80
+	}
 }
 ```
+
+⚠️ **I blocchi non possono stare su una riga sola.** `handle @x { direttiva }` fa fallire
+l'adattamento con `Unexpected next token after '{' on same line`: la graffa aperta dev'essere
+l'ultimo token della riga. (I `path` ripetuti dentro un matcher invece vanno bene: Caddy li
+unisce in un unico elenco in OR.)
+
+Questo blocco e' stato **validato** con `caddy validate` e `caddy adapt`: il matcher del portale
+compila correttamente tutti e sei i percorsi.
 
 **Cosa resta visibile da fuori, e perche':** il frontend e' un'unica applicazione React servita
 da `/`, quindi esponendo il portale si espongono anche i file della pagina di login. Non e'
