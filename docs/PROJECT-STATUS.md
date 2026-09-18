@@ -1,7 +1,7 @@
 # Atlas CMMS self-hosted — Stato del progetto & Changelog
 
 > **Documento master di stato.** Snapshot dello stato reale (produzione) + storico delle versioni.
-> Aggiornato: **2026-09-17**. Deployment live: `https://cmms.firmabratex.pl` (LAN-only dietro Caddy, TLS wildcard).
+> Aggiornato: **2026-09-18**. Deployment live: `https://cmms.firmabratex.pl` (LAN-only dietro Caddy, TLS wildcard).
 > Fork: `Daviz96/cmms`, branch **`self-hosted`** = **default branch** (dal 2026-09-17; `main` eliminato perche' congelato al punto di fork e senza commit esclusivi). Sul fork resta **solo** `self-hosted`: i 28 branch ereditati da upstream sono stati eliminati (verificati identici). GitHub Actions **disabilitate**: il workflow ereditato da upstream pubblica immagini `intelloop/*` e deploya su Koyeb/Netlify, roba non nostra. Immagini: Docker Hub `dablio96/self-hosted-cmms-*`.
 > Fotografia puntuale del giorno: [project-snapshot-2026-09-07.md](project-snapshot-2026-09-07.md).
 
@@ -47,15 +47,21 @@ Ordine cronologico. "Deploy" = attivo in produzione.
 
 | **v1.4.0** | **Sync upstream** (88 commit `Grashjs/cmms`, 31 ago → 16 set): Sentry, Microsoft Clarity, test nuovi, CI, PartService, invito obbligatorio per super admin, fix upload file. 2 conflitti risolti; MinIO **non** aggiornato di proposito; `sentry.send-default-pii` forzato a `false`. Migrazione DB additiva (`own_user.language`). Adattati 20 test upstream rimasti rossi dal sync precedente; **suite completa 1872/0/0** (Testcontainers inclusi). | `534242df` | ✅ (2026-09-17) — LIVE e confermata funzionante. Novita' utente: **lingua per utente**, filtri calendario, date di fine eventi, location asset dal padre, niente auto-notifiche, tecnici vedono i ricambi. Dettaglio: [upstream-sync-2026-09.md](upstream-sync-2026-09.md) §1-bis |
 
+| **v1.5.0** | **Portale zgłoszeń: due migliorie al form.** (1) Il campo titolo ha ora **due modalità di etichetta** selezionabili dalla configurazione: classica *Tytuł zgłoszenia* oppure **Stanowisko/maszyna/inne**, più chiara su cosa scrivere. (2) Nuovo campo attivabile **Miejsce**: il segnalante **scrive** il luogo invece di sceglierlo dalla lista, per cose che in anagrafica non esistono ("Magazyn 1", "damska toaleta"); il valore va **in testa alla descrizione**, perché `Request` non ha una colonna di testo libero per un luogo. Nessuna migrazione DB. Corretto anche un difetto upstream: `show_options`/`hide_options` mancavano da tutte le traduzioni e il tooltip mostrava la chiave grezza. | `534d0566`,`56d2119d` | ⏳ `-rc2` provata sul LAN, deploy della versione piena da fare |
+
 **Compose di produzione:** i tag delle immagini sono scritti **esplicitamente** nelle righe `image:`
 di `api` e `frontend` (niente `ATLAS_VERSION`): due righe indipendenti, perche' le release non sono
 sempre sincronizzate. Il commit che tocca quelle righe e' il registro del deploy.
 
-**Immagini Docker Hub:** backend `v1.0.0..v1.2.1`, `v1.3.0`, **`v1.4.0`**; frontend `v1.0.2`, `v1.1.0`, `v1.2.0`, `v1.2.2`, `v1.3.0`, **`v1.4.0`**
-(il frontend è cambiato solo in quei punti; `v1.2.1` fu solo backend). **`latest`** (backend+frontend) **corretto**
-(2026-09-17) → punta a **`v1.4.0`** (prima era disallineato a una versione vecchia). RC di lavoro: `v1.3.0-rc1`
-(= digest di `v1.3.0`). Tag git: `self-hosted-v1.0.0`, `self-hosted-v1.3.0`, **`self-hosted-v1.4.0`** (le altre = commit + tag immagine).
-`v1.4.0`, `v1.4.0-rc1` e `latest` condividono lo stesso digest: l'immagine promossa e' identica a quella validata sul LAN.
+**Immagini Docker Hub:** backend `v1.0.0..v1.2.1`, `v1.3.0`, `v1.4.0`, **`v1.5.0`**; frontend `v1.0.2`, `v1.1.0`, `v1.2.0`, `v1.2.2`, `v1.3.0`, `v1.4.0`, **`v1.5.0`**
+(il frontend è cambiato solo in quei punti; `v1.2.1` fu solo backend). **`latest`** (backend+frontend) → **`v1.5.0`**
+(2026-09-18). Tag git: `self-hosted-v1.0.0`, `self-hosted-v1.3.0`, `self-hosted-v1.4.0`, **`self-hosted-v1.5.0`**
+(le altre = commit + tag immagine).
+
+**Prassi di rilascio:** si pubblica una `-rcN`, la si prova sul LAN, poi la si ritagga con la versione piena e si
+sposta `latest`. Versione piena e rc condividono quindi lo stesso digest: ciò che va in produzione è esattamente
+l'immagine validata, non una ricompilazione. `v1.5.0` è stata provata come `-rc2` (la `-rc1` conteneva solo la
+modalità etichetta del titolo, senza il campo Miejsce).
 
 ---
 

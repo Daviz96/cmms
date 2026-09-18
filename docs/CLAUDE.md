@@ -11,7 +11,7 @@ The project is worked on incrementally through numbered `MOD-xxx` modules.
 Each module is audited, implemented only when necessary, and then verified with
 tests and persistent documentation.
 
-**Current focus:** **PRODUZIONE STABILE su `v1.4.0`** (sync upstream completato e rilasciato il 2026-09-17). Deployment
+**Current focus:** **`v1.5.0` — portale zgłoszeń: modalità etichetta del titolo + campo Miejsce a testo libero** (2026-09-18). Deployment
 self-hosted **live** su `https://cmms.firmabratex.pl` (LAN-only, dietro **Caddy** TLS wildcard; `SELF_HOSTED`;
 DB originale preservato). Fork `Daviz96/cmms`, branch **`self-hosted`** (= **default branch** dal 2026-09-17; `main` e `sync-upstream` eliminati, non avevano commit esclusivi). **GitHub Actions disabilitate sul fork**: `main-ci.yml` ereditato da upstream pubblica immagini `intelloop/*` e deploya su Koyeb/Netlify. I **bug storici 1/2/3** e il **sync upstream**
 sono **risolti e live**. Ultimo rilascio: **`v1.3.0`** (backend+frontend, 2026-09-07) — **visibilità asset per

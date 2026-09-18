@@ -34,7 +34,7 @@ services:
     # sempre sincronizzate (v1.2.1 fu solo backend, v1.2.2 solo frontend) e i due repo Docker
     # Hub hanno set di tag diversi. Si aggiorna a mano a ogni rilascio: il commit che tocca
     # questa riga E' il registro del deploy.
-    image: dablio96/self-hosted-cmms-backend:self-hosted-v1.4.0
+    image: dablio96/self-hosted-cmms-backend:self-hosted-v1.5.0
     container_name: atlas-cmms-backend
     depends_on:
       - postgres
@@ -117,7 +117,7 @@ services:
   frontend:
     # VERSIONE: vedi il commento sul servizio api. Se una release tocca solo il backend,
     # questa riga resta ferma alla versione precedente.
-    image: dablio96/self-hosted-cmms-frontend:self-hosted-v1.4.0
+    image: dablio96/self-hosted-cmms-frontend:self-hosted-v1.5.0
     container_name: atlas-cmms-frontend
     environment:
       API_URL: /api
