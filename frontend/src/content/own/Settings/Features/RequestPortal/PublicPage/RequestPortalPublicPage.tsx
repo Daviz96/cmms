@@ -58,6 +58,8 @@ interface FormValues {
   title: string;
   description?: string;
   contact?: string;
+  // Free-text place; not sent as its own field, it is prepended to the description.
+  place?: string;
   location?: LocationMiniDTO | null;
   asset?: AssetMiniDTO | null;
   images?: File[];
@@ -82,6 +84,7 @@ export default function RequestPortalPublicPage() {
     title: '',
     description: '',
     contact: '',
+    place: '',
     location: null,
     asset: null,
     images: [],
@@ -135,6 +138,10 @@ export default function RequestPortalPublicPage() {
     setFormValues((prev) => ({ ...prev, contact: value }));
   }, []);
 
+  const handlePlaceChange = useCallback((value: string) => {
+    setFormValues((prev) => ({ ...prev, place: value }));
+  }, []);
+
   const handleImagesChange = useCallback((files: File[]) => {
     setFormValues((prev) => ({ ...prev, images: files }));
   }, []);
@@ -163,6 +170,11 @@ export default function RequestPortalPublicPage() {
         case 'CONTACT':
           if (!formValues.contact?.trim()) {
             errors.contact = t('required_contact');
+          }
+          break;
+        case 'PLACE':
+          if (!formValues.place?.trim()) {
+            errors.place = t('required_place');
           }
           break;
         case 'LOCATION':
@@ -229,12 +241,19 @@ export default function RequestPortalPublicPage() {
         )) as number[];
       }
 
+      // Request has no free-text column for a place, so the value is prepended to the
+      // description instead of travelling as its own field.
+      const place = formValues.place?.trim();
+      const composedDescription = place
+        ? `${t('portal_place')}: ${place}\n\n${formValues.description ?? ''}`.trim()
+        : formValues.description;
+
       await dispatch(
         submitPublicRequest(
           uuid!,
           {
             title: formValues.title,
-            description: formValues.description,
+            description: composedDescription,
             contact: formValues.contact,
             location: formValues.location || null,
             asset: formValues.asset || null,
@@ -342,6 +361,7 @@ export default function RequestPortalPublicPage() {
       onDescriptionChange={handleDescriptionChange}
       onTitleChange={handleTitleChange}
       onContactChange={handleContactChange}
+      onPlaceChange={handlePlaceChange}
       onImagesChange={handleImagesChange}
       onFilesChange={handleFilesChange}
       onSubmit={handleSubmit}

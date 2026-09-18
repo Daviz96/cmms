@@ -33,6 +33,7 @@ import {
 import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
 import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import EditLocationOutlinedIcon from '@mui/icons-material/EditLocationOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -102,6 +103,13 @@ export const FIELD_DEFS: FieldDef[] = [
     labelKey: 'location',
     hasSelectionPanel: true,
     publicWarningKey: 'portal_public_location_warning'
+  },
+  {
+    // Free-text alternative to LOCATION: the reporter types the place instead of
+    // picking it from the location list. Goes to the head of the description.
+    type: 'PLACE',
+    icon: <EditLocationOutlinedIcon fontSize="small" />,
+    labelKey: 'portal_place'
   },
   {
     type: 'ASSET',

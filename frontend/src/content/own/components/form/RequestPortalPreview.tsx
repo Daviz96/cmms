@@ -66,6 +66,7 @@ export interface RequestPortalPreviewProps {
   onDescriptionChange?: (value: string) => void;
   onTitleChange?: (value: string) => void;
   onContactChange?: (value: string) => void;
+  onPlaceChange?: (value: string) => void;
   onImagesChange?: (files: File[]) => void;
   onFilesChange?: (files: File[]) => void;
   onSubmit?: () => Promise<void>;
@@ -363,6 +364,7 @@ interface PreviewFieldRenderProps {
   onDescriptionChange?: (value: string) => void;
   onTitleChange?: (value: string) => void;
   onContactChange?: (value: string) => void;
+  onPlaceChange?: (value: string) => void;
   onImagesChange?: (files: File[]) => void;
   onFilesChange?: (files: File[]) => void;
   disabled?: boolean;
@@ -382,6 +384,7 @@ function PreviewFieldRender({
   onAssetSelect,
   onDescriptionChange,
   onContactChange,
+  onPlaceChange,
   onImagesChange,
   onFilesChange,
   disabled,
@@ -481,6 +484,18 @@ function PreviewFieldRender({
             helperText={error}
           />
         );
+      case 'PLACE':
+        return (
+          <TextField
+            fullWidth
+            disabled={disabled}
+            label={getLabel(t('portal_place'), config.required)}
+            required={config.required}
+            onChange={(e) => onPlaceChange?.(e.target.value)}
+            error={!!error}
+            helperText={error}
+          />
+        );
       case 'IMAGE':
       case 'FILES': {
         const isImage = def.type === 'IMAGE';
@@ -524,6 +539,7 @@ export default function RequestPortalPreview({
   onAssetSelect,
   onDescriptionChange,
   onContactChange,
+  onPlaceChange,
   onImagesChange,
   onFilesChange,
   onSubmit,
@@ -579,6 +595,7 @@ export default function RequestPortalPreview({
                 onTitleChange={onTitleChange}
                 onDescriptionChange={onDescriptionChange}
                 onContactChange={onContactChange}
+                onPlaceChange={onPlaceChange}
                 onImagesChange={onImagesChange}
                 onFilesChange={onFilesChange}
                 disabled={preview}

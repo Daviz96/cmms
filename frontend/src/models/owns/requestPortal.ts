@@ -27,7 +27,9 @@ export type PortalFieldType =
   | 'LOCATION'
   | 'FILES'
   // Not a visible field: marks the title input as "workstation / machine / other".
-  | 'STATION';
+  | 'STATION'
+  // Free-text place, prepended to the description on submit.
+  | 'PLACE';
 
 export interface RequestPortalPostDTO {
   title: string;
