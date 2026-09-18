@@ -95,6 +95,38 @@ docker compose restart nginx
 Il deploy va eseguito a mano sul server: la chiave SSH ha passphrase e richiede sudo, quindi
 non è pilotabile dall'assistente.
 
+## 6-bis. `nginx.conf` diverge in silenzio a ogni release
+
+`nginx.conf` e' **montato dall'host** (`./nginx.conf:/etc/nginx/conf.d/default.conf:ro`), quindi
+**non viene aggiornato quando si aggiornano le immagini**. Il file sul server resta fermo a quando
+e' stato copiato l'ultima volta, mentre quello nel repo cambia a ogni sync con upstream.
+
+Nessuno se ne accorge finche' qualcosa non si rompe. E' successo il 2026-09-18 attivando reCAPTCHA:
+la CSP del server era indietro di mesi e bloccava prima lo script (`script-src` senza
+`*.gstatic.com`), poi l'iframe della sfida (`frame-src` con `maps.google.com` invece di
+`*.google.com`). Due errori trovati uno alla volta, entrambi gia' risolti nel repo.
+
+**Da fare a ogni release**, insieme allo swap delle immagini:
+
+```bash
+cd /srv/docker/atlas
+curl -fsSL https://raw.githubusercontent.com/Daviz96/cmms/self-hosted/nginx.conf -o nginx.conf.repo
+diff nginx.conf nginx.conf.repo          # se e' vuoto, non c'e' niente da fare
+```
+
+Se ci sono differenze:
+
+```bash
+sudo cp nginx.conf nginx.conf.backup-$(date +%F)
+sudo cp nginx.conf.repo nginx.conf
+sudo docker compose exec nginx nginx -t  # validare PRIMA di riavviare
+sudo docker compose restart nginx
+```
+
+⚠️ L'unica riga da non perdere mai e' `proxy_set_header Host minio:9000` nel blocco `/storage/`:
+e' quella che fa quadrare le firme degli URL degli allegati. Dopo ogni modifica al file, aprire un
+allegato e' la verifica che conta.
+
 ## 7. Trappole operative — leggere prima di toccare la produzione
 
 1. **Mai `docker compose down -v`.** I dati (Postgres e MinIO) sono in bind-mount su
