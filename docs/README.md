@@ -195,4 +195,5 @@ ruotata: procedura in [minio-key-rotation.md](minio-key-rotation.md).
 | Bug storici risolti | [live-deployment-bugs-handoff.md](live-deployment-bugs-handoff.md) |
 | Ultimo sync upstream | [upstream-sync-2026-09.md](upstream-sync-2026-09.md) |
 | Ruotare la chiave MinIO | [minio-key-rotation.md](minio-key-rotation.md) |
+| Esporre il portale su internet | [public-portal-exposure.md](public-portal-exposure.md) |
 | Feature asset scoping | [feature-proposals/asset-visibility-scoping.md](feature-proposals/asset-visibility-scoping.md) |

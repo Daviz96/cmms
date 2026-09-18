@@ -106,6 +106,13 @@ server swap `frontend` → `pull`+`up -d`+`restart nginx`.
   backup completo riuscito con la chiave nuova. Procedura: [minio-key-rotation.md](minio-key-rotation.md).
   **Nota:** i backup precedenti al 2026-09-17 contengono la secret vecchia, ormai inutile, ma
   restano da valutare per la cancellazione.
+- **Esporre il portale zgłoszeń su internet** (obiettivo aperto dal 2026-09-18): il QR code deve
+  funzionare anche da rete mobile, oggi il deployment è LAN-only. Ambito deciso: **solo il portale**,
+  login e API di gestione restano interni. ⚠️ Due punti da chiudere **prima** di aprire la 443:
+  `ALLOWED_ORGANIZATION_ADMINS` è **vuota** (chiunque potrebbe registrarsi e creare organizzazioni)
+  e reCAPTCHA non è configurato. Inoltre aprire la 443 espone **tutti** i siti di Caddy, wiki e cmms
+  compresi, finché non si chiudono alla LAN con `remote_ip`.
+  Guida completa: [public-portal-exposure.md](public-portal-exposure.md).
 - **File untracked da decidere** (lasciati così per ora, 2026-09-07): ~~`docker-compose.prod.yml`~~ (**risolto 2026-09-17**: ora tracciato e fedele al server,
   con i tag delle immagini scritti esplicitamente) e `images/download-apk.png` (848 B, non referenziata nel frontend). Da
   aggiornare/gitignorare oppure cancellare in futuro.
